@@ -1,0 +1,6 @@
+.idea
+assets/admin.json
+cfg/tokens.json
+cfg/db_config.go
+miner-bot
+assets/logs

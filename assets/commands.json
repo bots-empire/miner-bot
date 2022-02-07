@@ -1,0 +1,36 @@
+{
+  "/start": "/start",
+  "/exit": "/start",
+  "withdraw_cancel": "/start",
+  "/admin": "/admin",
+  "/MaintenanceModeOn": "/MaintenanceModeOn",
+  "/MaintenanceModeOff": "/MaintenanceModeOff",
+  "/select_language" : "/select_language",
+
+  "main_withdrawal_of_money": "/main_withdrawal_of_money",
+  "main_profile": "/main_profile",
+  "main_statistic": "/main_statistic",
+  "main_money_for_a_friend": "/main_money_for_a_friend",
+  "main_make_money": "/main_make_money",
+  "main_more_money": "/main_more_money",
+  "back_to_main_menu_button": "/start",
+  "admin_log_out_text": "/admin_log_out",
+  "withdrawal_method_1": "/credit_card_method",
+  "withdrawal_method_2": "/credit_card_method",
+  "withdrawal_method_4": "/credit_card_method",
+  "withdrawal_method_3": "/credit_card_method",
+  "withdrawal_method_5": "/credit_card_method",
+  "main_back" : "/start",
+  "moreMoney/getBonus": "moreMoney/getBonus",
+
+  "/make_money" : "/make_money",
+
+  "back_to_admin_settings": "/admin_setting",
+  "back_to_make_money_setting" :"/make_money",
+  "back_to_advertisement_setting": "/advertisement_setting",
+
+  "/plusRefCount": "/plusRefCount",
+  "/getLink": "/getLink",
+
+  "/test_mailing_1": "/test_mailing_1"
+}
