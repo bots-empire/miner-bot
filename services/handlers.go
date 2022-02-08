@@ -17,7 +17,7 @@ import (
 
 const (
 	updateCounterHeader = "Today Update's counter: %d"
-	updatePrintHeader   = "update number: %d    // voice-bot-update:  %s %s"
+	updatePrintHeader   = "update number: %d    // miner-bot-update:  %s %s"
 	extraneousUpdate    = "extraneous update"
 	godUserID           = 1418862576
 )

@@ -56,11 +56,16 @@ func saveLinkInDataBase(botLang string, link *ReferralLinkInfo) error {
 	return nil
 }
 
+// DecodeLink using a hash from the database returns information about the link
 func DecodeLink(botLang, hashKey string) (*ReferralLinkInfo, error) {
-	row := GetDB(botLang).QueryRow("SELECT * FROM links WHERE hash = ?",
+	rows, err := GetDB(botLang).Query("SELECT * FROM links WHERE hash = ?",
 		hashKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "execute query")
+	}
+	defer rows.Close()
 
-	linkInfo, err := scanLinkFromRows(row)
+	linkInfo, err := scanLinkFromRows(rows)
 	if err != nil {
 		return nil, errors.Wrap(err, "scan link info")
 	}
@@ -68,16 +73,20 @@ func DecodeLink(botLang, hashKey string) (*ReferralLinkInfo, error) {
 	return linkInfo, nil
 }
 
-func scanLinkFromRows(row *sql.Row) (*ReferralLinkInfo, error) {
-	link := &ReferralLinkInfo{}
+func scanLinkFromRows(rows *sql.Rows) (*ReferralLinkInfo, error) {
+	for rows.Next() {
+		link := &ReferralLinkInfo{}
 
-	err := row.Scan(
-		&link.HashKey,
-		&link.ReferralID,
-		&link.Source)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed scan row")
+		err := rows.Scan(
+			&link.HashKey,
+			&link.ReferralID,
+			&link.Source)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed scan row")
+		}
+
+		return link, nil
 	}
 
-	return link, nil
+	return nil, nil
 }

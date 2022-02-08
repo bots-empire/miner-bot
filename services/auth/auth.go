@@ -104,8 +104,10 @@ func pullReferralID(botLang string, message *tgbotapi.Message) int64 {
 	}
 
 	linkInfo, err := model.DecodeLink(botLang, readParams[1])
-	if err != nil {
-		msgs.SendNotificationToDeveloper("some err in decode link: " + err.Error())
+	if err != nil || linkInfo == nil {
+		if err != nil {
+			msgs.SendNotificationToDeveloper("some err in decode link: " + err.Error())
+		}
 
 		model.IncomeBySource.WithLabelValues(
 			model.GetGlobalBot(botLang).BotLink,
