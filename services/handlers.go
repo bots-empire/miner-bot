@@ -54,9 +54,6 @@ func (h *MessagesHandlers) Init() {
 
 	//Log out command
 	h.OnCommand("/admin_log_out", NewAdminLogOutCommand())
-
-	//Tech command
-	h.OnCommand("/getLink", NewGetLinkCommand())
 }
 
 func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
@@ -574,24 +571,6 @@ func (c *MoreMoneyCommand) Serve(s model.Situation) error {
 	).Build(s.User.Language)
 
 	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markup, text)
-}
-
-type GetLinkCommand struct {
-}
-
-func NewGetLinkCommand() *GetLinkCommand {
-	return &GetLinkCommand{}
-}
-
-func (c *GetLinkCommand) Serve(s model.Situation) error {
-	params := strings.Split(s.Message.Text, " ")
-
-	link := fmt.Sprintf("%s?start=source--", model.GetGlobalBot(s.BotLang).BotLink)
-	if len(params) > 1 {
-		link += params[1]
-	}
-
-	return msgs.NewParseMessage(s.BotLang, s.User.ID, link)
 }
 
 func simpleAdminMsg(s model.Situation, key string) error {

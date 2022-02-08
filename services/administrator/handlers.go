@@ -24,9 +24,6 @@ func (h *AdminMessagesHandlers) Init() {
 	h.OnCommand("/change_text_url", NewSetNewTextUrlCommand())
 	h.OnCommand("/advertisement_setting", NewAdvertisementSettingCommand())
 	h.OnCommand("/get_new_source", NewGetNewSourceCommand())
-
-	// Test mailing command's
-	h.OnCommand("/test_mailing_1", NewStartTestMailing1Command())
 }
 
 func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler) {

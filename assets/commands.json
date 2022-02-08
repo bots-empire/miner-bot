@@ -27,10 +27,5 @@
 
   "back_to_admin_settings": "/admin_setting",
   "back_to_make_money_setting" :"/make_money",
-  "back_to_advertisement_setting": "/advertisement_setting",
-
-  "/plusRefCount": "/plusRefCount",
-  "/getLink": "/getLink",
-
-  "/test_mailing_1": "/test_mailing_1"
+  "back_to_advertisement_setting": "/advertisement_setting"
 }
