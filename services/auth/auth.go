@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/model"
@@ -68,15 +69,33 @@ func SetStartLanguage(botLang string, callback *tgbotapi.CallbackQuery) error {
 	return nil
 }
 
-func addNewUser(u *model.User, botLang string, referralID int64) error {
+func addNewUser(user *model.User, botLang string, referralID int64) error {
+	user.RegisterTime = time.Now().Unix()
+	user.Language = botLang
+
 	dataBase := model.GetDB(botLang)
-	rows, err := dataBase.Query("INSERT INTO users VALUES(?, 0, 0, 0, 0, 0, FALSE, ?);", u.ID, u.Language)
+	rows, err := dataBase.Query(`
+INSERT INTO users
+	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+		user.ID,
+		user.Balance,
+		user.BalanceHash,
+		user.BalanceBTC,
+		user.MiningToday,
+		user.LastClick,
+		user.MinerLevel,
+		user.ReferralCount,
+		user.TakeBonus,
+		user.Language,
+		user.RegisterTime,
+		user.MinWithdrawal,
+		user.FirstWithdrawal)
 	if err != nil {
 		return errors.Wrap(err, "query failed")
 	}
 	_ = rows.Close()
 
-	if referralID == u.ID || referralID == 0 {
+	if referralID == user.ID || referralID == 0 {
 		return nil
 	}
 
@@ -154,28 +173,25 @@ func ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 	var users []*model.User
 
 	for rows.Next() {
-		var (
-			id                                                int64
-			balance, completed, completedToday, referralCount int
-			lastVoice                                         int64
-			takeBonus                                         bool
-			lang                                              string
-		)
+		user := &model.User{}
 
-		if err := rows.Scan(&id, &balance, &completed, &completedToday, &lastVoice, &referralCount, &takeBonus, &lang); err != nil {
+		if err := rows.Scan(&user.ID,
+			&user.Balance,
+			&user.BalanceHash,
+			&user.BalanceBTC,
+			&user.MiningToday,
+			&user.LastClick,
+			&user.MinerLevel,
+			&user.ReferralCount,
+			&user.TakeBonus,
+			&user.Language,
+			&user.RegisterTime,
+			&user.MinWithdrawal,
+			&user.FirstWithdrawal); err != nil {
 			msgs.SendNotificationToDeveloper(errors.Wrap(err, "failed to scan row").Error())
 		}
 
-		users = append(users, &model.User{
-			ID:             id,
-			Balance:        balance,
-			Completed:      completed,
-			CompletedToday: completedToday,
-			LastVoice:      lastVoice,
-			ReferralCount:  referralCount,
-			TakeBonus:      takeBonus,
-			Language:       lang,
-		})
+		users = append(users, user)
 	}
 
 	return users, nil

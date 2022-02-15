@@ -31,20 +31,23 @@ func (h *MessagesHandlers) GetHandler(command string) model.Handler {
 }
 
 func (h *MessagesHandlers) Init() {
-	//Start command
+	// Start command
 	h.OnCommand("/select_language", NewSelectLangCommand())
 	h.OnCommand("/start", NewStartCommand())
 	h.OnCommand("/admin", administrator.NewAdminCommand())
 
-	//Main command
-	//h.OnCommand("/main_make_money", NewMakeMoneyCommand())
+	// Main command
+	h.OnCommand("/main_make_money", NewMakeMoneyCommand())
+	h.OnCommand("/make_money_click", NewMakeClickCommand())
+	h.OnCommand("/make_money_buy_btc", NewBuyBTCCommand())
+	h.OnCommand("/make_money_lvl_up", NewLvlUpMinerCommand())
 	h.OnCommand("/main_profile", NewSendProfileCommand())
 	h.OnCommand("/new_make_money", NewMakeMoneyMsgCommand())
 	h.OnCommand("/main_money_for_a_friend", NewMoneyForAFriendCommand())
 	h.OnCommand("/main_more_money", NewMoreMoneyCommand())
 	h.OnCommand("/main_statistic", NewMakeStatisticCommand())
 
-	//Spend money command
+	// Spend money command
 	h.OnCommand("/main_withdrawal_of_money", NewSpendMoneyWithdrawalCommand())
 	h.OnCommand("/paypal_method", NewPaypalReqCommand())
 	h.OnCommand("/credit_card_method", NewCreditCardReqCommand())
@@ -52,7 +55,7 @@ func (h *MessagesHandlers) Init() {
 	h.OnCommand("/withdrawal_req_amount", NewReqWithdrawalAmountCommand())
 	h.OnCommand("/withdrawal_exit", NewWithdrawalAmountCommand())
 
-	//Log out command
+	// Log out command
 	h.OnCommand("/admin_log_out", NewAdminLogOutCommand())
 }
 
@@ -248,28 +251,100 @@ func emptyLevel(botLang string, message *tgbotapi.Message, lang string) {
 	_ = msgs.SendMsgToUser(botLang, msg)
 }
 
+type StartCommand struct {
+}
+
+func NewStartCommand() *StartCommand {
+	return &StartCommand{}
+}
+
+func (c StartCommand) Serve(s model.Situation) error {
+	if s.Message != nil {
+		if strings.Contains(s.Message.Text, "new_admin") {
+			s.Command = s.Message.Text
+			return administrator.CheckNewAdmin(s)
+		}
+	}
+
+	text := assets.LangText(s.User.Language, "main_select_menu")
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+
+	msg := tgbotapi.NewMessage(s.User.ID, text)
+	msg.ReplyMarkup = createMainMenu().Build(s.User.Language)
+
+	return msgs.SendMsgToUser(s.BotLang, msg)
+}
+
 func createMainMenu() msgs.MarkUp {
-	var markUp msgs.MarkUp
+	return msgs.NewMarkUp(
+		msgs.NewRow(msgs.NewDataButton("main_make_money")),
+		msgs.NewRow(msgs.NewDataButton("main_money_for_a_friend"),
+			msgs.NewDataButton("main_profile")),
+		msgs.NewRow(msgs.NewDataButton("main_statistic"),
+			msgs.NewDataButton("main_withdrawal_of_money")),
+		msgs.NewRow(msgs.NewDataButton("main_more_money")),
+	)
+}
 
-	newRow := msgs.NewRow()
-	newRow.Buttons = append(newRow.Buttons, msgs.NewDataButton("main_make_money"))
-	markUp.Rows = append(markUp.Rows, newRow)
+type MakeMoneyCommand struct {
+}
 
-	newRow = msgs.NewRow()
-	newRow.Buttons = append(newRow.Buttons, msgs.NewDataButton("main_profile"))
-	newRow.Buttons = append(newRow.Buttons, msgs.NewDataButton("main_statistic"))
-	markUp.Rows = append(markUp.Rows, newRow)
+func NewMakeMoneyCommand() *MakeMoneyCommand {
+	return &MakeMoneyCommand{}
+}
 
-	newRow = msgs.NewRow()
-	newRow.Buttons = append(newRow.Buttons, msgs.NewDataButton("main_withdrawal_of_money"))
-	newRow.Buttons = append(newRow.Buttons, msgs.NewDataButton("main_money_for_a_friend"))
-	markUp.Rows = append(markUp.Rows, newRow)
+func (c *MakeMoneyCommand) Serve(s model.Situation) error {
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+	text := assets.LangText(s.User.Language, "main_select_menu")
 
-	newRow = msgs.NewRow()
-	newRow.Buttons = append(newRow.Buttons, msgs.NewDataButton("main_more_money"))
-	markUp.Rows = append(markUp.Rows, newRow)
+	msg := tgbotapi.NewMessage(s.User.ID, text)
+	msg.ReplyMarkup = msgs.NewMarkUp(
+		msgs.NewRow(msgs.NewDataButton("make_money_click")),
+		msgs.NewRow(msgs.NewDataButton("make_money_buy_btc")),
+		msgs.NewRow(msgs.NewDataButton("make_money_lvl_up")),
+		msgs.NewRow(msgs.NewDataButton("back_to_main_menu_button")),
+	).Build(s.User.Language)
 
-	return markUp
+	return msgs.SendMsgToUser(s.BotLang, msg)
+}
+
+type MakeClickCommand struct {
+}
+
+func NewMakeClickCommand() *MakeClickCommand {
+	return &MakeClickCommand{}
+}
+
+func (c *MakeClickCommand) Serve(s model.Situation) error {
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+
+	return auth.MakeClick(s)
+}
+
+type BuyBTCCommand struct {
+}
+
+func NewBuyBTCCommand() *BuyBTCCommand {
+	return &BuyBTCCommand{}
+}
+
+func (c *BuyBTCCommand) Serve(s model.Situation) error {
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+
+	return nil
+}
+
+type LvlUpMinerCommand struct {
+}
+
+func NewLvlUpMinerCommand() *LvlUpMinerCommand {
+	return &LvlUpMinerCommand{}
+}
+
+func (c *LvlUpMinerCommand) Serve(s model.Situation) error {
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+
+	return nil
 }
 
 type SendProfileCommand struct {
@@ -283,7 +358,7 @@ func (c *SendProfileCommand) Serve(s model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	text := msgs.GetFormatText(s.User.Language, "profile_text",
-		s.Message.From.FirstName, s.Message.From.UserName, s.User.Balance, s.User.Completed, s.User.ReferralCount)
+		s.Message.From.FirstName, s.Message.From.UserName, s.User.Balance, s.User.MiningToday, s.User.ReferralCount)
 
 	if len(model.GetGlobalBot(s.BotLang).LanguageInBot) > 1 {
 		ReplyMarkup := createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot)
@@ -349,30 +424,6 @@ func createLangMenu(languages []string) tgbotapi.InlineKeyboardMarkup {
 	}
 
 	return markup
-}
-
-type StartCommand struct {
-}
-
-func NewStartCommand() *StartCommand {
-	return &StartCommand{}
-}
-
-func (c StartCommand) Serve(s model.Situation) error {
-	if s.Message != nil {
-		if strings.Contains(s.Message.Text, "new_admin") {
-			s.Command = s.Message.Text
-			return administrator.CheckNewAdmin(s)
-		}
-	}
-
-	text := assets.LangText(s.User.Language, "main_select_menu")
-	db.RdbSetUser(s.BotLang, s.User.ID, "main")
-
-	msg := tgbotapi.NewMessage(s.User.ID, text)
-	msg.ReplyMarkup = createMainMenu().Build(s.User.Language)
-
-	return msgs.SendMsgToUser(s.BotLang, msg)
 }
 
 type SpendMoneyWithdrawalCommand struct {
@@ -500,32 +551,12 @@ type MakeStatisticCommand struct {
 func NewMakeStatisticCommand() *MakeStatisticCommand {
 	return &MakeStatisticCommand{}
 }
-
 func (c *MakeStatisticCommand) Serve(s model.Situation) error {
 	text := assets.LangText(s.User.Language, "statistic_to_user")
 
 	text = getDate(text)
 
 	return msgs.NewParseMessage(s.BotLang, s.Message.Chat.ID, text)
-}
-
-type MakeMoneyCommand struct {
-}
-
-func NewMakeMoneyCommand() *MakeMoneyCommand {
-	return &MakeMoneyCommand{}
-}
-
-func (c *MakeMoneyCommand) Serve(s model.Situation) error {
-	if !auth.MakeMoney(s) {
-		text := assets.LangText(s.User.Language, "main_select_menu")
-		msg := tgbotapi.NewMessage(s.User.ID, text)
-		msg.ReplyMarkup = createMainMenu().Build(s.User.Language)
-
-		return msgs.SendMsgToUser(s.BotLang, msg)
-	}
-
-	return nil
 }
 
 type MakeMoneyMsgCommand struct {
@@ -542,9 +573,6 @@ func (c *MakeMoneyMsgCommand) Serve(s model.Situation) error {
 		return nil
 	}
 
-	if !auth.AcceptVoiceMessage(s) {
-		return nil
-	}
 	return nil
 }
 

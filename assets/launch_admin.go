@@ -32,7 +32,7 @@ type AdminUser struct {
 	SpecialPossibility bool
 }
 
-type Params struct {
+type Params struct { // TODO: rename fields
 	BonusAmount         int
 	MinWithdrawalAmount int
 	VoiceAmount         int

@@ -216,7 +216,7 @@ func (c *AddNewSourceCommand) Serve(s model.Situation) error {
 
 	markUp := msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewAdminButton("back_to_admin_settings")),
-		msgs.NewRow(msgs.NewAdminButton("exit")),
+		msgs.NewRow(msgs.NewAdminButton("admin_log_out_text")),
 	).Build(lang)
 
 	_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "type_the_text")

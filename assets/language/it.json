@@ -1,12 +1,15 @@
 {
   "main_select_menu": "Selezionare una voce di menu 👇",
-  "main_make_money": "👨🏻‍💻 Guadagnare",
-  "main_profile": "👤 Profilo",
-  "main_statistic": "📊 Statistiche",
-  "main_withdrawal_of_money": "💳 Prelievo di denaro",
-  "main_money_for_a_friend": "💼 Soldi per un amico",
-  "main_more_money": "💰 Più soldi",
+  "main_make_money": "⛏ Mining",
+  "main_profile": "\uD83D\uDCBC Profilo",
+  "main_statistic": "\uD83D\uDCC8 Statistiche",
+  "main_withdrawal_of_money": "\uD83D\uDCB0 Prelievo di denaro",
+  "main_money_for_a_friend": "\uD83D\uDC65 Soldi per un amico",
+  "main_more_money": "\uD83D\uDCB8 Più soldi",
   "main_back": "⬅️ Indietro",
+  "make_money_click": "⛏ Clic",
+  "make_money_buy_btc": "\uD83C\uDFDB Scambio",
+  "make_money_lvl_up": "\uD83C\uDD99 Migliorare Miner",
   "back_to_main_menu_button": "⬅️ Menu principale",
   "back_to_main_menu": "Sei tornato al menu principale",
   "make_money_statistic": "<b>Eseguito:</b> %d di %d\n<b>Guadagni con l'invio:</b> %d {{currency}}.\n\n\uD83D\uDCB0 <b>Il tuo saldo:</b> %d {{currency}}.\n\n<b>Soldi guadagnati oggi:</b> %d {{currency}}.",
@@ -50,5 +53,5 @@
   "invitation_to_subscribe": "We checked your subscription",
   "user_dont_subscribe": "non sei iscritto al canale",
   "invalid_link_err": "Error, link is invalid",
-  "select_lang_menu" : "Seleccione por favor uma língua"
+  "select_lang_menu": "Seleccione por favor uma língua"
 }

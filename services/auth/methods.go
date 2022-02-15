@@ -8,12 +8,10 @@ import (
 	"time"
 
 	"github.com/Stepan1328/miner-bot/assets"
-	"github.com/Stepan1328/miner-bot/db"
 	"github.com/Stepan1328/miner-bot/model"
 	"github.com/Stepan1328/miner-bot/msgs"
-	"github.com/pkg/errors"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -196,91 +194,36 @@ func readUser(rows *sql.Rows) (*model.User, error) {
 	return users[0], nil
 }
 
-func AcceptVoiceMessage(s model.Situation) bool {
-	s.User.Balance += assets.AdminSettings.Parameters[s.BotLang].VoiceAmount
-	s.User.Completed++
-	s.User.CompletedToday++
-	s.User.LastVoice = time.Now().Unix()
-
-	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query("UPDATE users SET balance = ?, completed = ?, completed_today = ?, last_voice = ? WHERE id = ?;",
-		s.User.Balance, s.User.Completed, s.User.CompletedToday, s.User.LastVoice, s.User.ID)
-	if err != nil {
-		text := "Fatal Err with DB - methods.89 //" + err.Error()
-		msgs.SendNotificationToDeveloper(text)
-		return false
-	}
-	err = rows.Close()
-	if err != nil {
-		return false
-	}
-
-	return MakeMoney(s)
-}
-
-func MakeMoney(s model.Situation) bool {
-	var err error
-	if time.Now().Unix()/86400 > s.User.LastVoice/86400 {
-		err = resetVoiceDayCounter(s)
-		if err != nil {
-			return false
+func MakeClick(s model.Situation) error {
+	if time.Now().Unix()/86400 > s.User.LastClick/86400 {
+		if err := resetTodayMiningCounter(s); err != nil {
+			return err
 		}
 	}
 
-	if s.User.CompletedToday >= assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay {
-		_ = reachedMaxAmountPerDay(s)
-		return false
+	if s.User.MiningToday >= assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay {
+		return reachedMaxAmountPerDay(s)
 	}
 
-	db.RdbSetUser(s.BotLang, s.User.ID, "/new_make_money")
-
-	err = sendMoneyStatistic(s)
-	if err != nil {
-		return false
-	}
-	err = sendInvitationToRecord(s)
-	if err != nil {
-		return false
-	}
-	return true
+	return nil
 }
 
-func resetVoiceDayCounter(s model.Situation) error {
-	s.User.CompletedToday = 0
-	s.User.LastVoice = time.Now().Unix()
+func resetTodayMiningCounter(s model.Situation) error {
+	s.User.MiningToday = 0
+	s.User.LastClick = time.Now().Unix()
 
 	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query("UPDATE users SET completed_today = ?, last_voice = ? WHERE id = ?;",
-		s.User.CompletedToday, s.User.LastVoice, s.User.ID)
+	rows, err := dataBase.Query(`
+UPDATE users SET
+      mining_today = ?, 
+	last_click = ? 
+WHERE id = ?;`)
 	if err != nil {
 		return errors.Wrap(err, "query failed")
 	}
+	rows.Close()
 
-	return rows.Close()
-}
-
-func sendMoneyStatistic(s model.Situation) error {
-	text := assets.LangText(s.User.Language, "make_money_statistic")
-	text = fmt.Sprintf(text,
-		s.User.CompletedToday,
-		assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay,
-		assets.AdminSettings.Parameters[s.BotLang].VoiceAmount,
-		s.User.Balance,
-		s.User.CompletedToday*assets.AdminSettings.Parameters[s.BotLang].VoiceAmount)
-
-	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
-}
-
-func sendInvitationToRecord(s model.Situation) error {
-	text := assets.LangText(s.User.Language, "invitation_to_record_voice")
-	text = fmt.Sprintf(text, "hi")
-	text = strings.Replace(text, assistName, model.GetGlobalBot(s.BotLang).AssistName, -1)
-
-	markup := msgs.NewMarkUp(
-		msgs.NewRow(msgs.NewDataButton("back_to_main_menu_button")),
-	).Build(s.User.Language)
-
-	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markup, text)
+	return nil
 }
 
 func reachedMaxAmountPerDay(s model.Situation) error {
