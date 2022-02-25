@@ -12,6 +12,7 @@ import (
 	"github.com/Stepan1328/miner-bot/msgs"
 	"github.com/Stepan1328/miner-bot/services"
 	"github.com/Stepan1328/miner-bot/services/administrator"
+	"github.com/Stepan1328/miner-bot/utils"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -84,12 +85,41 @@ func startHandlers(logger log.Logger) {
 		wg.Add(1)
 		go func(botLang string, handler *model.GlobalBot, wg *sync.WaitGroup) {
 			defer wg.Done()
-			services.ActionsWithUpdates(botLang, handler.Chanel, logger)
+			services.ActionsWithUpdates(botLang, handler.Chanel, logger, utils.NewSpreader(time.Minute))
 		}(botLang, handler, wg)
 	}
 
 	logger.Ok("All handlers are running")
 	msgs.SendNotificationToDeveloper("All bots are restart")
+
+	//update := tgbotapi.Update{
+	//	CallbackQuery: &tgbotapi.CallbackQuery{
+	//		ID: "some_id",
+	//		From: &tgbotapi.User{
+	//			ID:                      1418862576,
+	//			IsBot:                   false,
+	//			FirstName:               "Name",
+	//			LastName:                "Last Name",
+	//			UserName:                "username",
+	//			LanguageCode:            "en",
+	//			CanJoinGroups:           false,
+	//			CanReadAllGroupMessages: false,
+	//			SupportsInlineQueries:   false,
+	//		},
+	//		Message: &tgbotapi.Message{
+	//			Chat: &tgbotapi.Chat{
+	//				ID: 1418862576,
+	//			},
+	//		},
+	//		Data: "/make_money_click",
+	//	},
+	//}
+	//
+	//for i := 0; i < 1000; i++ {
+	//	time.Sleep(time.Millisecond * 50)
+	//	updateChannel <- update
+	//}
+
 	wg.Wait()
 }
 

@@ -12,6 +12,8 @@
   "make_money_lvl_up": "\uD83C\uDD99 Upgrade Miner",
   "back_to_main_menu_button": "⬅️ Main menu",
   "back_to_main_menu": "You are back to the main menu",
+  "get_clicker_text": "<b>Today</b>: %d / %d\n<b>Progress</b>: %d %s\n\nHash per Click: %d\nMiner Level: %d\nBalance Hash: %d",
+  "click_done": "+1 ⛏",
   "make_money_statistic": "<b>Done:</b> %d of %d\n<b>Sending revenue:</b> %d {{currency}}.\n\n\uD83D\uDCB0 <b>Your balance:</b> %d {{currency}}.\n\n<b>Earned money today:</b> %d {{currency}}.",
   "invitation_to_record_voice": "\uD83D\uDDE3 <b>Record a voice message with the phrase:</b>\n«%s»",
   "voice_not_recognized": "The message is not confirmed",

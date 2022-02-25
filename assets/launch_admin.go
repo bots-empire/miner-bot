@@ -35,8 +35,8 @@ type AdminUser struct {
 type Params struct { // TODO: rename fields
 	BonusAmount         int
 	MinWithdrawalAmount int
-	VoiceAmount         int
-	MaxOfVoicePerDay    int
+	ClickAmount         []int
+	MaxOfClickPerDay    int
 	ReferralAmount      int
 
 	Currency string

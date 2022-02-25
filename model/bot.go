@@ -6,10 +6,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/Stepan1328/miner-bot/cfg"
 	"github.com/go-redis/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-
-	"github.com/Stepan1328/miner-bot/cfg"
 
 	_ "github.com/go-sql-driver/mysql"
 )

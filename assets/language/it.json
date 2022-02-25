@@ -12,6 +12,8 @@
   "make_money_lvl_up": "\uD83C\uDD99 Migliorare Miner",
   "back_to_main_menu_button": "⬅️ Menu principale",
   "back_to_main_menu": "Sei tornato al menu principale",
+  "get_clicker_text": "<b>Oggi</b>: %d / %d\n<b>Progress</b>: %d %s\n\nHash per clic: %d\nLivello minatore: %d\nEquilibrio Hash: %d",
+  "click_done": "+1 ⛏",
   "make_money_statistic": "<b>Eseguito:</b> %d di %d\n<b>Guadagni con l'invio:</b> %d {{currency}}.\n\n\uD83D\uDCB0 <b>Il tuo saldo:</b> %d {{currency}}.\n\n<b>Soldi guadagnati oggi:</b> %d {{currency}}.",
   "invitation_to_record_voice": "\uD83D\uDDE3 <b>Registra un messaggio vocale con una frase:</b>\n«%s»",
   "voice_not_recognized": "Messaggio non riconosciuto",

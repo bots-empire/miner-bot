@@ -93,10 +93,10 @@ func (c *ChangeParameterCommand) Serve(s model2.Situation) error {
 		value = assets.AdminSettings.Parameters[s.BotLang].MinWithdrawalAmount
 	case voiceAmount:
 		parameter = assets.AdminText(lang, "change_voice_amount_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].VoiceAmount
+		value = assets.AdminSettings.Parameters[s.BotLang].ClickAmount
 	case voicePDAmount:
 		parameter = assets.AdminText(lang, "change_voice_pd_amount_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay
+		value = assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay
 	case referralAmount:
 		parameter = assets.AdminText(lang, "change_referral_amount_button")
 		value = assets.AdminSettings.Parameters[s.BotLang].ReferralAmount

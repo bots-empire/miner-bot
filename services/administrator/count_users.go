@@ -11,14 +11,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	getUsersCountQuery    = "SELECT COUNT(*) FROM users;"
-	getDistinctUsersQuery = "SELECT COUNT(DISTINCT id) FROM subs;"
-)
-
 func countUsers(botLang string) int {
 	dataBase := model.GetDB(botLang)
-	rows, err := dataBase.Query(getUsersCountQuery)
+	rows, err := dataBase.Query(`
+SELECT COUNT(*) FROM users;`)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -42,7 +38,8 @@ func readRows(rows *sql.Rows) int {
 func countAllUsers() int {
 	var sum int
 	for _, handler := range model.Bots {
-		rows, err := handler.DataBase.Query(getUsersCountQuery)
+		rows, err := handler.DataBase.Query(`
+SELECT COUNT(*) FROM users;`)
 		if err != nil {
 			log.Println(err.Error())
 		}
@@ -73,7 +70,8 @@ func countBlockedUsers(botLang string) int {
 }
 
 func countSubscribers(botLang string) int {
-	rows, err := model.Bots[botLang].DataBase.Query(getDistinctUsersQuery)
+	rows, err := model.Bots[botLang].DataBase.Query(`
+SELECT COUNT(DISTINCT id) FROM subs;`)
 	if err != nil {
 		log.Println(err.Error())
 	}

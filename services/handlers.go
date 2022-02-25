@@ -12,6 +12,7 @@ import (
 	"github.com/Stepan1328/miner-bot/msgs"
 	"github.com/Stepan1328/miner-bot/services/administrator"
 	"github.com/Stepan1328/miner-bot/services/auth"
+	"github.com/Stepan1328/miner-bot/utils"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -63,15 +64,15 @@ func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-func ActionsWithUpdates(botLang string, updates tgbotapi.UpdatesChannel, logger log.Logger) {
+func ActionsWithUpdates(botLang string, updates tgbotapi.UpdatesChannel, logger log.Logger, sortCentre *utils.Spreader) {
 	for update := range updates {
 		localUpdate := update
 
-		go checkUpdate(botLang, &localUpdate, logger)
+		go checkUpdate(botLang, &localUpdate, logger, sortCentre)
 	}
 }
 
-func checkUpdate(botLang string, update *tgbotapi.Update, logger log.Logger) {
+func checkUpdate(botLang string, update *tgbotapi.Update, logger log.Logger, sortCentre *utils.Spreader) {
 	defer panicCather(botLang, update)
 
 	if update.Message == nil && update.CallbackQuery == nil {
@@ -97,7 +98,7 @@ func checkUpdate(botLang string, update *tgbotapi.Update, logger log.Logger) {
 		situation := createSituationFromMsg(botLang, update.Message, user)
 		situation.Command = command
 
-		checkMessage(situation, logger)
+		checkMessage(situation, logger, sortCentre)
 		return
 	}
 
@@ -116,7 +117,7 @@ func checkUpdate(botLang string, update *tgbotapi.Update, logger log.Logger) {
 			return
 		}
 
-		checkCallbackQuery(situation, logger)
+		checkCallbackQuery(situation, logger, sortCentre)
 		return
 	}
 }
@@ -189,7 +190,7 @@ func createSituationFromCallback(botLang string, callbackQuery *tgbotapi.Callbac
 	}, nil
 }
 
-func checkMessage(situation model.Situation, logger log.Logger) {
+func checkMessage(situation model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
 
 	if model.Bots[situation.BotLang].MaintenanceMode {
 		if situation.User.ID != godUserID {
@@ -204,30 +205,28 @@ func checkMessage(situation model.Situation, logger log.Logger) {
 	}
 
 	if situation.Err == nil {
-		Handler := model.Bots[situation.BotLang].MessageHandler.
+		handler := model.Bots[situation.BotLang].MessageHandler.
 			GetHandler(situation.Command)
 
-		if Handler != nil {
-			err := Handler.Serve(situation)
-			if err != nil {
+		if handler != nil {
+			sortCentre.ServeHandler(handler, situation, func(err error) {
 				logger.Warn("error with serve user msg command: %s", err.Error())
 				smthWentWrong(situation.BotLang, situation.Message.Chat.ID, situation.User.Language)
-			}
+			})
 			return
 		}
 	}
 
 	situation.Command = strings.Split(situation.Params.Level, "?")[0]
 
-	Handler := model.Bots[situation.BotLang].MessageHandler.
+	handler := model.Bots[situation.BotLang].MessageHandler.
 		GetHandler(situation.Command)
 
-	if Handler != nil {
-		err := Handler.Serve(situation)
-		if err != nil {
+	if handler != nil {
+		sortCentre.ServeHandler(handler, situation, func(err error) {
 			logger.Warn("error with serve user level command: %s", err.Error())
 			smthWentWrong(situation.BotLang, situation.Message.Chat.ID, situation.User.Language)
-		}
+		})
 		return
 	}
 
@@ -308,6 +307,26 @@ func (c *MakeMoneyCommand) Serve(s model.Situation) error {
 	return msgs.SendMsgToUser(s.BotLang, msg)
 }
 
+//type MakeClickCommand struct {
+//}
+//
+//func NewMakeClickCommand() *MakeClickCommand {
+//	return &MakeClickCommand{}
+//}
+//
+//func (c *MakeClickCommand) Serve(s model.Situation) error {
+//	db.RdbSetUser(s.BotLang, s.User.ID, "make")
+//
+//	_, _ = model.GetGlobalBot(s.BotLang).Bot.Send(tgbotapi.NewDeleteMessage(s.User.ID, s.Message.MessageID))
+//
+//	err := auth.MakeClick(s)
+//	if err != nil {
+//		return errors.Wrap(err, "failed make click")
+//	}
+//
+//	return nil
+//}
+
 type MakeClickCommand struct {
 }
 
@@ -316,9 +335,35 @@ func NewMakeClickCommand() *MakeClickCommand {
 }
 
 func (c *MakeClickCommand) Serve(s model.Situation) error {
-	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+	db.RdbSetUser(s.BotLang, s.User.ID, "make")
 
-	return auth.MakeClick(s)
+	text, markUp := buildClickMsg(s.BotLang, s.User)
+
+	msgID, err := msgs.NewIDParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+	if err != nil {
+		return err
+	}
+
+	db.SaveUserClickerMsgID(s.BotLang, s.User.ID, msgID)
+	return nil
+}
+
+func buildClickMsg(botLang string, user *model.User) (string, *tgbotapi.InlineKeyboardMarkup) {
+	text := assets.LangText(user.Language, "get_clicker_text")
+	text = fmt.Sprintf(text,
+		user.MiningToday,
+		assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay,
+		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay) * 100),
+		"%",
+		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel],
+		user.MinerLevel,
+		user.BalanceHash)
+
+	markUp := msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlDataButton("make_money_click", "/make_money_click")),
+	).Build(user.Language)
+
+	return text, &markUp
 }
 
 type BuyBTCCommand struct {

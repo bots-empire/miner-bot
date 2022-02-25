@@ -3,7 +3,7 @@ package model
 type User struct {
 	ID              int64   `json:"id"`
 	Balance         int     `json:"balance"`
-	BalanceHash     int64   `json:"balance_hash"`
+	BalanceHash     int     `json:"balance_hash"`
 	BalanceBTC      float64 `json:"balance_btc"`
 	MiningToday     int     `json:"mining_today"`
 	LastClick       int64   `json:"last_click"`

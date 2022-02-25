@@ -14,16 +14,81 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	updateBalanceQuery = "UPDATE users SET balance = ? WHERE id = ?;"
+func MakeClick(s model.Situation) (error, bool) {
+	if time.Now().Unix()/86400 > s.User.LastClick/86400 {
+		if err := resetTodayMiningCounter(s); err != nil {
+			return err, false
+		}
+	}
 
-	updateAfterBonusQuery = "UPDATE users SET balance = ?, take_bonus = ? WHERE id = ?;"
+	if s.User.MiningToday >= assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay {
+		return reachedMaxAmountPerDay(s), true
+	}
 
-	getSubsUserQuery = "SELECT * FROM subs WHERE id = ?;"
-	updateSubsQuery  = "INSERT INTO subs VALUES(?);"
+	return increaseBalanceAfterClick(s), false
+}
 
-	assistName = "{{assist_name}}"
-)
+func resetTodayMiningCounter(s model.Situation) error {
+	s.User.MiningToday = 0
+	s.User.LastClick = time.Now().Unix()
+
+	dataBase := model.GetDB(s.BotLang)
+	rows, err := dataBase.Query(`
+UPDATE users SET
+      mining_today = 0, 
+	last_click = ? 
+WHERE id = ?;`,
+		s.User.LastClick,
+		s.User.ID)
+	if err != nil {
+		return errors.Wrap(err, "query failed")
+	}
+	rows.Close()
+
+	return nil
+}
+
+func reachedMaxAmountPerDay(s model.Situation) error {
+	text := assets.LangText(s.User.Language, "reached_max_amount_per_day")
+	text = fmt.Sprintf(text,
+		assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay,
+		assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay)
+
+	markUp := msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.AdvertisingChan[s.User.Language].Url)),
+	).Build(s.User.Language)
+
+	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+}
+
+func increaseBalanceAfterClick(s model.Situation) error {
+	s.User.BalanceHash += getClickAmount(s.BotLang, s.User.MinerLevel)
+	s.User.MiningToday++
+	s.User.LastClick = time.Now().Unix()
+
+	dataBase := model.GetDB(s.BotLang)
+	rows, err := dataBase.Query(`
+UPDATE users 
+	SET balance_hash = balance_hash + ?, 
+	    mining_today = mining_today + 1,
+	    last_click = ?
+WHERE id = ?;`,
+		getClickAmount(s.BotLang, s.User.MinerLevel),
+		s.User.LastClick,
+		s.User.ID)
+	if err != nil {
+		text := "Fatal Err with DB - methods.89 //" + err.Error()
+		msgs.SendNotificationToDeveloper(text)
+		return err
+	}
+	rows.Close()
+
+	return nil
+}
+
+func getClickAmount(botLang string, minerLevel int8) int {
+	return assets.AdminSettings.Parameters[botLang].ClickAmount[minerLevel-1]
+}
 
 func WithdrawMoneyFromBalance(s model.Situation, amount string) error {
 	amount = strings.Replace(amount, " ", "", -1)
@@ -76,7 +141,12 @@ func CheckSubscribeToWithdrawal(s model.Situation, amount int) bool {
 
 	s.User.Balance -= amount
 	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query(updateBalanceQuery, s.User.Balance, s.User.ID)
+	rows, err := dataBase.Query(`
+UPDATE users 
+	SET balance = ?
+WHERE id = ?;`,
+		s.User.Balance,
+		s.User.ID)
 	if err != nil {
 		return false
 	}
@@ -100,7 +170,14 @@ func GetABonus(s model.Situation) error {
 
 	s.User.Balance += assets.AdminSettings.Parameters[s.BotLang].BonusAmount
 	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query(updateAfterBonusQuery, s.User.Balance, true, s.User.ID)
+	rows, err := dataBase.Query(`
+UPDATE users 
+	SET balance = ?, 
+	    take_bonus = ? 
+WHERE id = ?;`,
+		s.User.Balance,
+		true,
+		s.User.ID)
 	if err != nil {
 		return err
 	}
@@ -149,7 +226,10 @@ func checkMemberStatus(member tgbotapi.ChatMember) bool {
 
 func addMemberToSubsBase(s model.Situation) error {
 	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query(getSubsUserQuery, s.User.ID)
+	rows, err := dataBase.Query(`
+SELECT * FROM subs 
+	WHERE id = ?;`,
+		s.User.ID)
 	if err != nil {
 		return err
 	}
@@ -162,7 +242,9 @@ func addMemberToSubsBase(s model.Situation) error {
 	if user.ID != 0 {
 		return nil
 	}
-	rows, err = dataBase.Query(updateSubsQuery, s.User.ID)
+	rows, err = dataBase.Query(`
+INSERT INTO subs VALUES(?);`,
+		s.User.ID)
 	if err != nil {
 		return err
 	}
@@ -192,47 +274,4 @@ func readUser(rows *sql.Rows) (*model.User, error) {
 		})
 	}
 	return users[0], nil
-}
-
-func MakeClick(s model.Situation) error {
-	if time.Now().Unix()/86400 > s.User.LastClick/86400 {
-		if err := resetTodayMiningCounter(s); err != nil {
-			return err
-		}
-	}
-
-	if s.User.MiningToday >= assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay {
-		return reachedMaxAmountPerDay(s)
-	}
-
-	return nil
-}
-
-func resetTodayMiningCounter(s model.Situation) error {
-	s.User.MiningToday = 0
-	s.User.LastClick = time.Now().Unix()
-
-	dataBase := model.GetDB(s.BotLang)
-	rows, err := dataBase.Query(`
-UPDATE users SET
-      mining_today = ?, 
-	last_click = ? 
-WHERE id = ?;`)
-	if err != nil {
-		return errors.Wrap(err, "query failed")
-	}
-	rows.Close()
-
-	return nil
-}
-
-func reachedMaxAmountPerDay(s model.Situation) error {
-	text := assets.LangText(s.User.Language, "reached_max_amount_per_day")
-	text = fmt.Sprintf(text, assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay, assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay)
-
-	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.AdvertisingChan[s.User.Language].Url)),
-	).Build(s.User.Language)
-
-	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
 }

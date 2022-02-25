@@ -13,13 +13,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	getUsersUserQuery = "SELECT * FROM users WHERE id = ?;"
-)
-
 func CheckingTheUser(botLang string, message *tgbotapi.Message) (*model.User, error) {
 	dataBase := model.GetDB(botLang)
-	rows, err := dataBase.Query(getUsersUserQuery, message.From.ID)
+	rows, err := dataBase.Query(`
+SELECT * FROM users 
+	WHERE id = ?;`,
+		message.From.ID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get user")
 	}
@@ -70,6 +69,7 @@ func SetStartLanguage(botLang string, callback *tgbotapi.CallbackQuery) error {
 }
 
 func addNewUser(user *model.User, botLang string, referralID int64) error {
+	user.MinerLevel = 1
 	user.RegisterTime = time.Now().Unix()
 	user.Language = botLang
 
@@ -155,7 +155,10 @@ func createSimpleUser(botLang string, message *tgbotapi.Message) *model.User {
 
 func GetUser(botLang string, id int64) (*model.User, error) {
 	dataBase := model.GetDB(botLang)
-	rows, err := dataBase.Query(getUsersUserQuery, id)
+	rows, err := dataBase.Query(`
+SELECT * FROM users
+	WHERE id = ?;`,
+		id)
 	if err != nil {
 		return nil, err
 	}

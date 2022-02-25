@@ -85,9 +85,9 @@ func setNewIntParameter(s model.Situation, partition string) error {
 	case minWithdrawalAmount:
 		assets.AdminSettings.Parameters[s.BotLang].MinWithdrawalAmount = newAmount
 	case voiceAmount:
-		assets.AdminSettings.Parameters[s.BotLang].VoiceAmount = newAmount
+		assets.AdminSettings.Parameters[s.BotLang].ClickAmount[0] = newAmount
 	case voicePDAmount:
-		assets.AdminSettings.Parameters[s.BotLang].MaxOfVoicePerDay = newAmount
+		assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay = newAmount
 	case referralAmount:
 		assets.AdminSettings.Parameters[s.BotLang].ReferralAmount = newAmount
 	}
