@@ -13,7 +13,6 @@ import (
 	"github.com/Stepan1328/miner-bot/services/auth"
 	"github.com/Stepan1328/miner-bot/utils"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/pkg/errors"
 )
 
 type CallBackHandlers struct {
@@ -29,7 +28,6 @@ func (h *CallBackHandlers) Init() {
 	h.OnCommand("/language", NewLanguageCommand())
 
 	// Money commands
-	h.OnCommand("/make_money_click", NewHandleClickCommand())
 	h.OnCommand("/send_bonus_to_user", NewGetBonusCommand())
 	h.OnCommand("/withdrawal_money", NewRecheckSubscribeCommand())
 	h.OnCommand("/promotion_case", NewPromotionCaseCommand())
@@ -82,32 +80,32 @@ func (c *LanguageCommand) Serve(s model.Situation) error {
 	return NewStartCommand().Serve(s)
 }
 
-type HandleClickCommand struct {
-}
-
-func NewHandleClickCommand() *HandleClickCommand {
-	return &HandleClickCommand{}
-}
-
-func (c *HandleClickCommand) Serve(s model.Situation) error {
-	err, ok := auth.MakeClick(s)
-	if err != nil {
-		return errors.Wrap(err, "failed make click")
-	}
-	if ok {
-		return nil
-	}
-	_ = msgs.SendAnswerCallback(s.BotLang, s.CallbackQuery, s.User.Language, "click_done")
-
-	s.User, err = auth.GetUser(s.BotLang, s.User.ID)
-	if err != nil {
-		return nil
-	}
-	text, markUp := buildClickMsg(s.BotLang, s.User)
-	oldMsgID := db.GetUserClickerMsgID(s.BotLang, s.User.ID)
-
-	return msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, oldMsgID, markUp, text)
-}
+//type HandleClickCommand struct {
+//}
+//
+//func NewHandleClickCommand() *HandleClickCommand {
+//	return &HandleClickCommand{}
+//}
+//
+//func (c *HandleClickCommand) Serve(s model.Situation) error {
+//	err, ok := auth.MakeClick(s)
+//	if err != nil {
+//		return errors.Wrap(err, "failed make click")
+//	}
+//	if ok {
+//		return nil
+//	}
+//	_ = msgs.SendAnswerCallback(s.BotLang, s.CallbackQuery, s.User.Language, "click_done")
+//
+//	s.User, err = auth.GetUser(s.BotLang, s.User.ID)
+//	if err != nil {
+//		return nil
+//	}
+//	text, markUp := buildClickMsg(s.BotLang, s.User)
+//	oldMsgID := db.GetUserClickerMsgID(s.BotLang, s.User.ID)
+//
+//	return msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, oldMsgID, markUp, text)
+//}
 
 type GetBonusCommand struct {
 }

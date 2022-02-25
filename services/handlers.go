@@ -14,6 +14,7 @@ import (
 	"github.com/Stepan1328/miner-bot/services/auth"
 	"github.com/Stepan1328/miner-bot/utils"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -317,33 +318,14 @@ func NewMakeClickCommand() *MakeClickCommand {
 func (c *MakeClickCommand) Serve(s model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "make")
 
-	text, markUp := buildClickMsg(s.BotLang, s.User)
+	_, _ = model.GetGlobalBot(s.BotLang).Bot.Send(tgbotapi.NewDeleteMessage(s.User.ID, s.Message.MessageID))
 
-	msgID, err := msgs.NewIDParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+	err := auth.MakeClick(s)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed make click")
 	}
 
-	db.SaveUserClickerMsgID(s.BotLang, s.User.ID, msgID)
 	return nil
-}
-
-func buildClickMsg(botLang string, user *model.User) (string, *tgbotapi.InlineKeyboardMarkup) {
-	text := assets.LangText(user.Language, "get_clicker_text")
-	text = fmt.Sprintf(text,
-		user.MiningToday,
-		assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay,
-		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay)*100),
-		"%",
-		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel],
-		user.MinerLevel,
-		user.BalanceHash)
-
-	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlDataButton("make_money_click", "/make_money_click")),
-	).Build(user.Language)
-
-	return text, &markUp
 }
 
 type BuyBTCCommand struct {
@@ -576,7 +558,6 @@ type MakeStatisticCommand struct {
 func NewMakeStatisticCommand() *MakeStatisticCommand {
 	return &MakeStatisticCommand{}
 }
-
 func (c *MakeStatisticCommand) Serve(s model.Situation) error {
 	text := assets.LangText(s.User.Language, "statistic_to_user")
 

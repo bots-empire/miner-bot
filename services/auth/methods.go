@@ -8,24 +8,62 @@ import (
 	"time"
 
 	"github.com/Stepan1328/miner-bot/assets"
+	"github.com/Stepan1328/miner-bot/db"
 	"github.com/Stepan1328/miner-bot/model"
 	"github.com/Stepan1328/miner-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 )
 
-func MakeClick(s model.Situation) (error, bool) {
+func MakeClick(s model.Situation) error {
 	if time.Now().Unix()/86400 > s.User.LastClick/86400 {
 		if err := resetTodayMiningCounter(s); err != nil {
-			return err, false
+			return err
 		}
 	}
 
 	if s.User.MiningToday >= assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay {
-		return reachedMaxAmountPerDay(s), true
+		return reachedMaxAmountPerDay(s)
 	}
 
-	return increaseBalanceAfterClick(s), false
+	err := increaseBalanceAfterClick(s)
+
+	updateUser, err := GetUser(s.BotLang, s.User.ID)
+	if err != nil {
+		updateUser = s.User
+	}
+
+	text := buildClickMsg(s.BotLang, updateUser)
+	id := db.GetUserClickerMsgID(s.BotLang, s.User.ID)
+	if id != 0 {
+		err := msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, id, nil, text)
+		if err == nil {
+			return nil
+		}
+		fmt.Println(err)
+	}
+
+	msgID, err := msgs.NewIDParseMessage(s.BotLang, s.User.ID, text)
+	if err != nil {
+		return err
+	}
+
+	db.SaveUserClickerMsgID(s.BotLang, s.User.ID, msgID)
+	return nil
+}
+
+func buildClickMsg(botLang string, user *model.User) string {
+	text := assets.LangText(user.Language, "get_clicker_text")
+	text = fmt.Sprintf(text,
+		user.MiningToday,
+		assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay,
+		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay)*100),
+		"%",
+		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel],
+		user.MinerLevel,
+		user.BalanceHash)
+
+	return text
 }
 
 func resetTodayMiningCounter(s model.Situation) error {
