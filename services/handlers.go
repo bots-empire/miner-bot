@@ -307,26 +307,6 @@ func (c *MakeMoneyCommand) Serve(s model.Situation) error {
 	return msgs.SendMsgToUser(s.BotLang, msg)
 }
 
-//type MakeClickCommand struct {
-//}
-//
-//func NewMakeClickCommand() *MakeClickCommand {
-//	return &MakeClickCommand{}
-//}
-//
-//func (c *MakeClickCommand) Serve(s model.Situation) error {
-//	db.RdbSetUser(s.BotLang, s.User.ID, "make")
-//
-//	_, _ = model.GetGlobalBot(s.BotLang).Bot.Send(tgbotapi.NewDeleteMessage(s.User.ID, s.Message.MessageID))
-//
-//	err := auth.MakeClick(s)
-//	if err != nil {
-//		return errors.Wrap(err, "failed make click")
-//	}
-//
-//	return nil
-//}
-
 type MakeClickCommand struct {
 }
 
@@ -353,7 +333,7 @@ func buildClickMsg(botLang string, user *model.User) (string, *tgbotapi.InlineKe
 	text = fmt.Sprintf(text,
 		user.MiningToday,
 		assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay,
-		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay) * 100),
+		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay)*100),
 		"%",
 		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel],
 		user.MinerLevel,
@@ -596,6 +576,7 @@ type MakeStatisticCommand struct {
 func NewMakeStatisticCommand() *MakeStatisticCommand {
 	return &MakeStatisticCommand{}
 }
+
 func (c *MakeStatisticCommand) Serve(s model.Situation) error {
 	text := assets.LangText(s.User.Language, "statistic_to_user")
 
