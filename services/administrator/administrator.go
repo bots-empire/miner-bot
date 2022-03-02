@@ -29,7 +29,7 @@ func NewChangeLangCommand() *ChangeLangCommand {
 	return &ChangeLangCommand{}
 }
 
-func (c *ChangeLangCommand) Serve(s model.Situation) error {
+func (c *ChangeLangCommand) Serve(s *model.Situation) error {
 	lang := assets.AdminLang(s.User.ID)
 	text := assets.AdminText(lang, "admin_set_lang_text")
 
@@ -50,7 +50,7 @@ func NewSetNewLangCommand() *SetNewLangCommand {
 	return &SetNewLangCommand{}
 }
 
-func (c *SetNewLangCommand) Serve(s model.Situation) error {
+func (c *SetNewLangCommand) Serve(s *model.Situation) error {
 	lang := strings.Split(s.CallbackQuery.Data, "?")[1]
 	assets.AdminSettings.AdminID[s.User.ID].Language = lang
 	assets.SaveAdminSettings()
@@ -69,7 +69,7 @@ func NewAdminListCommand() *AdminListCommand {
 	return &AdminListCommand{}
 }
 
-func (c *AdminListCommand) Serve(s model.Situation) error {
+func (c *AdminListCommand) Serve(s *model.Situation) error {
 	lang := assets.AdminLang(s.User.ID)
 	text := assets.AdminText(lang, "admin_list_text")
 
@@ -82,7 +82,7 @@ func (c *AdminListCommand) Serve(s model.Situation) error {
 	return sendMsgAdnAnswerCallback(s, &markUp, text)
 }
 
-func CheckNewAdmin(s model.Situation) error {
+func CheckNewAdmin(s *model.Situation) error {
 	key := strings.Replace(s.Command, "/start new_admin_", "", 1)
 	if availableKeys[key] != "" {
 		assets.AdminSettings.AdminID[s.User.ID] = &assets.AdminUser{
@@ -110,7 +110,7 @@ func NewNewAdminToListCommand() *NewAdminToListCommand {
 	return &NewAdminToListCommand{}
 }
 
-func (c *NewAdminToListCommand) Serve(s model.Situation) error {
+func (c *NewAdminToListCommand) Serve(s *model.Situation) error {
 	lang := assets.AdminLang(s.User.ID)
 
 	link := createNewAdminLink(s.BotLang)
@@ -157,7 +157,7 @@ func NewDeleteAdminCommand() *DeleteAdminCommand {
 	return &DeleteAdminCommand{}
 }
 
-func (c *DeleteAdminCommand) Serve(s model.Situation) error {
+func (c *DeleteAdminCommand) Serve(s *model.Situation) error {
 	if !adminHavePrivileges(s) {
 		return msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "admin_dont_have_permissions")
 	}
@@ -169,7 +169,7 @@ func (c *DeleteAdminCommand) Serve(s model.Situation) error {
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, createListOfAdminText(lang))
 }
 
-func adminHavePrivileges(s model.Situation) bool {
+func adminHavePrivileges(s *model.Situation) bool {
 	return assets.AdminSettings.AdminID[s.User.ID].SpecialPossibility
 }
 
@@ -189,7 +189,7 @@ func NewAdvertSourceMenuCommand() *AdvertSourceMenuCommand {
 	return &AdvertSourceMenuCommand{}
 }
 
-func (c *AdvertSourceMenuCommand) Serve(s model.Situation) error {
+func (c *AdvertSourceMenuCommand) Serve(s *model.Situation) error {
 	lang := assets.AdminLang(s.User.ID)
 	text := assets.AdminText(lang, "add_new_source_text")
 
@@ -209,7 +209,7 @@ func NewAddNewSourceCommand() *AddNewSourceCommand {
 	return &AddNewSourceCommand{}
 }
 
-func (c *AddNewSourceCommand) Serve(s model.Situation) error {
+func (c *AddNewSourceCommand) Serve(s *model.Situation) error {
 	lang := assets.AdminLang(s.User.ID)
 	text := assets.AdminText(lang, "input_new_source_text")
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin/get_new_source")
@@ -230,7 +230,7 @@ func NewGetNewSourceCommand() *GetNewSourceCommand {
 	return &GetNewSourceCommand{}
 }
 
-func (c *GetNewSourceCommand) Serve(s model.Situation) error {
+func (c *GetNewSourceCommand) Serve(s *model.Situation) error {
 	link, err := model.EncodeLink(s.BotLang, &model.ReferralLinkInfo{
 		Source: s.Message.Text,
 	})

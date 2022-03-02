@@ -2,6 +2,7 @@ package assets
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
@@ -32,7 +33,12 @@ func ParseLangMap() {
 	}
 }
 
-func LangText(lang, key string) string {
+func LangText(lang, key string, values ...interface{}) string {
+	formatText := langText(lang, key)
+	return fmt.Sprintf(formatText, values...)
+}
+
+func langText(lang, key string) string {
 	index := findLangIndex(lang)
 	return Language[index][key]
 }

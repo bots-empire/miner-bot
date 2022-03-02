@@ -1,7 +1,6 @@
 package msgs
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Stepan1328/miner-bot/assets"
@@ -118,11 +117,6 @@ func SendAdminAnswerCallback(botLang string, callbackQuery *tgbotapi.CallbackQue
 
 	_ = SendMsgToUser(botLang, answerCallback)
 	return nil
-}
-
-func GetFormatText(lang, text string, values ...interface{}) string {
-	formatText := assets.LangText(lang, text)
-	return fmt.Sprintf(formatText, values...)
 }
 
 func SendSimpleMsg(botLang string, chatID int64, text string) error {

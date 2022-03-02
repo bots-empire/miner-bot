@@ -27,7 +27,7 @@ type block struct {
 
 type condition struct {
 	handler      model.Handler
-	situation    model.Situation
+	situation    *model.Situation
 	errorHandler func(error)
 }
 
@@ -76,7 +76,7 @@ func (s *Spreader) collectObsoleteBlocks() {
 	}
 }
 
-func (s *Spreader) ServeHandler(fn model.Handler, sit model.Situation, errHandler func(error)) {
+func (s *Spreader) ServeHandler(fn model.Handler, sit *model.Situation, errHandler func(error)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

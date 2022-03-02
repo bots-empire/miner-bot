@@ -52,7 +52,7 @@ func (h *AdminCallbackHandlers) OnCommand(command string, handler model.Handler)
 	h.Handlers[command] = handler
 }
 
-func CheckAdminCallback(s model.Situation) error {
+func CheckAdminCallback(s *model.Situation) error {
 	if !ContainsInAdmin(s.User.ID) {
 		return notAdmin(s.BotLang, s.User)
 	}
@@ -73,7 +73,7 @@ func NewAdminCommand() *AdminLoginCommand {
 	return &AdminLoginCommand{}
 }
 
-func (c *AdminLoginCommand) Serve(s model.Situation) error {
+func (c *AdminLoginCommand) Serve(s *model.Situation) error {
 	if !ContainsInAdmin(s.User.ID) {
 		return notAdmin(s.BotLang, s.User)
 	}
@@ -126,7 +126,7 @@ func NewAdminMenuCommand() *AdminMenuCommand {
 	return &AdminMenuCommand{}
 }
 
-func (c *AdminMenuCommand) Serve(s model.Situation) error {
+func (c *AdminMenuCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin")
 	lang := assets.AdminLang(s.User.ID)
 	text := assets.AdminText(lang, "admin_main_menu_text")
@@ -163,7 +163,7 @@ func NewAdminSettingCommand() *AdminSettingCommand {
 	return &AdminSettingCommand{}
 }
 
-func (c *AdminSettingCommand) Serve(s model.Situation) error {
+func (c *AdminSettingCommand) Serve(s *model.Situation) error {
 	if strings.Contains(s.Params.Level, "delete_admin") {
 		if err := setAdminBackButton(s.BotLang, s.User.ID, "operation_canceled"); err != nil {
 			return err
@@ -194,7 +194,7 @@ func NewAdvertisementMenuCommand() *AdvertisementMenuCommand {
 	return &AdvertisementMenuCommand{}
 }
 
-func (c *AdvertisementMenuCommand) Serve(s model.Situation) error {
+func (c *AdvertisementMenuCommand) Serve(s *model.Situation) error {
 	if strings.Contains(s.Params.Level, "change_text_url?") {
 		if err := setAdminBackButton(s.BotLang, s.User.ID, "operation_canceled"); err != nil {
 			return err
@@ -250,7 +250,7 @@ func NewChangeUrlMenuCommand() *ChangeUrlMenuCommand {
 	return &ChangeUrlMenuCommand{}
 }
 
-func (c *ChangeUrlMenuCommand) Serve(s model.Situation) error {
+func (c *ChangeUrlMenuCommand) Serve(s *model.Situation) error {
 	key := "set_new_url_text"
 	value := assets.AdminSettings.AdvertisingChan[s.BotLang].Url
 
@@ -268,7 +268,7 @@ func NewChangeTextMenuCommand() *ChangeTextMenuCommand {
 	return &ChangeTextMenuCommand{}
 }
 
-func (c *ChangeTextMenuCommand) Serve(s model.Situation) error {
+func (c *ChangeTextMenuCommand) Serve(s *model.Situation) error {
 	key := "set_new_advertisement_text"
 	value := assets.AdminSettings.AdvertisingText[s.BotLang]
 
@@ -286,7 +286,7 @@ func NewMailingMenuCommand() *MailingMenuCommand {
 	return &MailingMenuCommand{}
 }
 
-func (c *MailingMenuCommand) Serve(s model.Situation) error {
+func (c *MailingMenuCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin/mailing")
 	resetSelectedLang()
 	_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "make_a_choice")
@@ -312,7 +312,7 @@ func NewStatisticCommand() *StatisticCommand {
 	return &StatisticCommand{}
 }
 
-func (c *StatisticCommand) Serve(s model.Situation) error {
+func (c *StatisticCommand) Serve(s *model.Situation) error {
 	lang := assets.AdminLang(s.User.ID)
 
 	count := countUsers(s.BotLang)
@@ -340,7 +340,7 @@ func adminFormatText(lang, key string, values ...interface{}) string {
 	return fmt.Sprintf(formatText, values...)
 }
 
-func sendMsgAdnAnswerCallback(s model.Situation, markUp *tgbotapi.InlineKeyboardMarkup, text string) error {
+func sendMsgAdnAnswerCallback(s *model.Situation, markUp *tgbotapi.InlineKeyboardMarkup, text string) error {
 	if db.RdbGetAdminMsgID(s.BotLang, s.User.ID) != 0 {
 		return msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, db.RdbGetAdminMsgID(s.BotLang, s.User.ID), markUp, text)
 	}

@@ -37,7 +37,7 @@ func NewUpdateParameterCommand() *UpdateParameterCommand {
 	return &UpdateParameterCommand{}
 }
 
-func (c *UpdateParameterCommand) Serve(s model.Situation) error {
+func (c *UpdateParameterCommand) Serve(s *model.Situation) error {
 	if strings.Contains(s.Params.Level, "make_money?") && s.Message.Text == "← Назад к ⚙️ Заработок" {
 		if err := setAdminBackButton(s.BotLang, s.User.ID, "operation_canceled"); err != nil {
 			return err
@@ -70,7 +70,7 @@ func (c *UpdateParameterCommand) Serve(s model.Situation) error {
 	return NewMakeMoneySettingCommand().Serve(s)
 }
 
-func setNewIntParameter(s model.Situation, partition string) error {
+func setNewIntParameter(s *model.Situation, partition string) error {
 	lang := assets.AdminLang(s.User.ID)
 
 	newAmount, err := strconv.Atoi(s.Message.Text)
@@ -102,7 +102,7 @@ func NewSetNewTextUrlCommand() *SetNewTextUrlCommand {
 	return &SetNewTextUrlCommand{}
 }
 
-func (c *SetNewTextUrlCommand) Serve(s model.Situation) error {
+func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
 	capitation := strings.Split(s.Params.Level, "?")[1]
 	lang := assets.AdminLang(s.User.ID)
 	status := "operation_canceled"
@@ -140,7 +140,7 @@ func NewAdvertisementSettingCommand() *AdvertisementSettingCommand {
 	return &AdvertisementSettingCommand{}
 }
 
-func (c *AdvertisementSettingCommand) Serve(s model.Situation) error {
+func (c *AdvertisementSettingCommand) Serve(s *model.Situation) error {
 	s.CallbackQuery = &tgbotapi.CallbackQuery{
 		Data: "admin/change_text_url?",
 	}
@@ -165,7 +165,7 @@ func getUrlAndChatID(message *tgbotapi.Message) *assets.AdvertChannel {
 	}
 }
 
-func CheckAdminMessage(s model.Situation) error {
+func CheckAdminMessage(s *model.Situation) error {
 	if !ContainsInAdmin(s.User.ID) {
 		return notAdmin(s.BotLang, s.User)
 	}
@@ -199,7 +199,7 @@ func NewStartTestMailing1Command() *StartTestMailing1Command {
 	return &StartTestMailing1Command{}
 }
 
-func (c *StartTestMailing1Command) Serve(s model.Situation) error {
+func (c *StartTestMailing1Command) Serve(s *model.Situation) error {
 	go db.StartTestMailing1(s.BotLang, s.User)
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, "тестовая рассылка запущена")
 }

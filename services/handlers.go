@@ -162,8 +162,8 @@ func sendTodayUpdateMsg() {
 	assets.UpdateStatistic.Day = int(time.Now().Unix()) / 86400
 }
 
-func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *model.User) model.Situation {
-	return model.Situation{
+func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *model.User) *model.Situation {
+	return &model.Situation{
 		Message: message,
 		BotLang: botLang,
 		User:    user,
@@ -173,13 +173,13 @@ func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *mod
 	}
 }
 
-func createSituationFromCallback(botLang string, callbackQuery *tgbotapi.CallbackQuery) (model.Situation, error) {
+func createSituationFromCallback(botLang string, callbackQuery *tgbotapi.CallbackQuery) (*model.Situation, error) {
 	user, err := auth.GetUser(botLang, callbackQuery.From.ID)
 	if err != nil {
-		return model.Situation{}, err
+		return &model.Situation{}, err
 	}
 
-	return model.Situation{
+	return &model.Situation{
 		CallbackQuery: callbackQuery,
 		BotLang:       botLang,
 		User:          user,
@@ -190,7 +190,7 @@ func createSituationFromCallback(botLang string, callbackQuery *tgbotapi.Callbac
 	}, nil
 }
 
-func checkMessage(situation model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
+func checkMessage(situation *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
 
 	if model.Bots[situation.BotLang].MaintenanceMode {
 		if situation.User.ID != godUserID {
@@ -257,7 +257,7 @@ func NewStartCommand() *StartCommand {
 	return &StartCommand{}
 }
 
-func (c StartCommand) Serve(s model.Situation) error {
+func (c StartCommand) Serve(s *model.Situation) error {
 	if s.Message != nil {
 		if strings.Contains(s.Message.Text, "new_admin") {
 			s.Command = s.Message.Text
@@ -292,7 +292,7 @@ func NewMakeMoneyCommand() *MakeMoneyCommand {
 	return &MakeMoneyCommand{}
 }
 
-func (c *MakeMoneyCommand) Serve(s model.Situation) error {
+func (c *MakeMoneyCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 	text := assets.LangText(s.User.Language, "main_select_menu")
 
@@ -314,7 +314,7 @@ func NewMakeClickCommand() *MakeClickCommand {
 	return &MakeClickCommand{}
 }
 
-func (c *MakeClickCommand) Serve(s model.Situation) error {
+func (c *MakeClickCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "make")
 
 	text, markUp := buildClickMsg(s.BotLang, s.User)
@@ -329,13 +329,12 @@ func (c *MakeClickCommand) Serve(s model.Situation) error {
 }
 
 func buildClickMsg(botLang string, user *model.User) (string, *tgbotapi.InlineKeyboardMarkup) {
-	text := assets.LangText(user.Language, "get_clicker_text")
-	text = fmt.Sprintf(text,
+	text := assets.LangText(user.Language, "get_clicker_text",
 		user.MiningToday,
 		assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay,
 		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay)*100),
 		"%",
-		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel],
+		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel - 1],
 		user.MinerLevel,
 		user.BalanceHash)
 
@@ -353,10 +352,13 @@ func NewBuyBTCCommand() *BuyBTCCommand {
 	return &BuyBTCCommand{}
 }
 
-func (c *BuyBTCCommand) Serve(s model.Situation) error {
-	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+func (c *BuyBTCCommand) Serve(s *model.Situation) error {
+	db.RdbSetUser(s.BotLang, s.User.ID, "change_buy_btc")
 
-	return nil
+	text := assets.LangText(s.User.Language, "change_buy_btc_text",
+		s.User.BalanceHash, assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
+
+	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 }
 
 type LvlUpMinerCommand struct {
@@ -366,10 +368,33 @@ func NewLvlUpMinerCommand() *LvlUpMinerCommand {
 	return &LvlUpMinerCommand{}
 }
 
-func (c *LvlUpMinerCommand) Serve(s model.Situation) error {
+func (c *LvlUpMinerCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
-	return nil
+	if s.User.MinerLevel-1 == int8(len(getUpgradeMinerCost(s.BotLang))) {
+		return reachedMaxMinerLvl(s)
+	}
+
+	text := assets.LangText(s.User.Language, "upgrade_miner_lvl_text",
+		s.User.MinerLevel,
+		getUpgradeMinerCost(s.BotLang)[s.User.MinerLevel-1])
+
+	markUp := msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlDataButton("upgrade_miner_lvl_button", "/upgrade_miner_lvl")),
+	).Build(s.User.Language)
+
+	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+}
+
+func getUpgradeMinerCost(botLang string) []int {
+	return assets.AdminSettings.Parameters[botLang].UpgradeMinerCost
+}
+
+func reachedMaxMinerLvl(s *model.Situation) error {
+	text := assets.LangText(s.User.Language, "reached_max_miner_lvl",
+		s.User.MinerLevel)
+
+	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 }
 
 type SendProfileCommand struct {
@@ -379,10 +404,10 @@ func NewSendProfileCommand() *SendProfileCommand {
 	return &SendProfileCommand{}
 }
 
-func (c *SendProfileCommand) Serve(s model.Situation) error {
+func (c *SendProfileCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
-	text := msgs.GetFormatText(s.User.Language, "profile_text",
+	text := assets.LangText(s.User.Language, "profile_text",
 		s.Message.From.FirstName, s.Message.From.UserName, s.User.Balance, s.User.MiningToday, s.User.ReferralCount)
 
 	if len(model.GetGlobalBot(s.BotLang).LanguageInBot) > 1 {
@@ -400,7 +425,7 @@ func NewMoneyForAFriendCommand() *MoneyForAFriendCommand {
 	return &MoneyForAFriendCommand{}
 }
 
-func (c *MoneyForAFriendCommand) Serve(s model.Situation) error {
+func (c *MoneyForAFriendCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	link, err := model.EncodeLink(s.BotLang, &model.ReferralLinkInfo{
@@ -411,7 +436,7 @@ func (c *MoneyForAFriendCommand) Serve(s model.Situation) error {
 		return err
 	}
 
-	text := msgs.GetFormatText(s.User.Language, "referral_text",
+	text := assets.LangText(s.User.Language, "referral_text",
 		link,
 		assets.AdminSettings.Parameters[s.BotLang].ReferralAmount,
 		s.User.ReferralCount)
@@ -422,11 +447,11 @@ func (c *MoneyForAFriendCommand) Serve(s model.Situation) error {
 type SelectLangCommand struct {
 }
 
-func NewSelectLangCommand() SelectLangCommand {
-	return SelectLangCommand{}
+func NewSelectLangCommand() *SelectLangCommand {
+	return &SelectLangCommand{}
 }
 
-func (c SelectLangCommand) Serve(s model.Situation) error {
+func (c *SelectLangCommand) Serve(s *model.Situation) error {
 	var text string
 	for _, lang := range model.GetGlobalBot(s.BotLang).LanguageInBot {
 		text += assets.LangText(lang, "select_lang_menu") + "\n"
@@ -458,10 +483,10 @@ func NewSpendMoneyWithdrawalCommand() *SpendMoneyWithdrawalCommand {
 	return &SpendMoneyWithdrawalCommand{}
 }
 
-func (c *SpendMoneyWithdrawalCommand) Serve(s model.Situation) error {
+func (c *SpendMoneyWithdrawalCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "withdrawal")
 
-	text := msgs.GetFormatText(s.User.Language, "select_payment")
+	text := assets.LangText(s.User.Language, "select_payment")
 	markUp := msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewDataButton("withdrawal_method_1"),
 			msgs.NewDataButton("withdrawal_method_2")),
@@ -481,7 +506,7 @@ func NewPaypalReqCommand() *PaypalReqCommand {
 	return &PaypalReqCommand{}
 }
 
-func (c *PaypalReqCommand) Serve(s model.Situation) error {
+func (c *PaypalReqCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_req_amount")
 
 	msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "paypal_method"))
@@ -499,7 +524,7 @@ func NewCreditCardReqCommand() *CreditCardReqCommand {
 	return &CreditCardReqCommand{}
 }
 
-func (c *CreditCardReqCommand) Serve(s model.Situation) error {
+func (c *CreditCardReqCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_req_amount")
 
 	msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "credit_card_number"))
@@ -517,7 +542,7 @@ func NewWithdrawalMethodCommand() *WithdrawalMethodCommand {
 	return &WithdrawalMethodCommand{}
 }
 
-func (c *WithdrawalMethodCommand) Serve(s model.Situation) error {
+func (c *WithdrawalMethodCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_req_amount")
 
 	msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "req_withdrawal_amount"))
@@ -535,7 +560,7 @@ func NewReqWithdrawalAmountCommand() *ReqWithdrawalAmountCommand {
 	return &ReqWithdrawalAmountCommand{}
 }
 
-func (c *ReqWithdrawalAmountCommand) Serve(s model.Situation) error {
+func (c *ReqWithdrawalAmountCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/withdrawal_exit")
 
 	msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "req_withdrawal_amount"))
@@ -550,7 +575,7 @@ func NewWithdrawalAmountCommand() *WithdrawalAmountCommand {
 	return &WithdrawalAmountCommand{}
 }
 
-func (c *WithdrawalAmountCommand) Serve(s model.Situation) error {
+func (c *WithdrawalAmountCommand) Serve(s *model.Situation) error {
 	return auth.WithdrawMoneyFromBalance(s, s.Message.Text)
 }
 
@@ -561,7 +586,7 @@ func NewAdminLogOutCommand() *AdminLogOutCommand {
 	return &AdminLogOutCommand{}
 }
 
-func (c *AdminLogOutCommand) Serve(s model.Situation) error {
+func (c *AdminLogOutCommand) Serve(s *model.Situation) error {
 	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 	if err := simpleAdminMsg(s, "admin_log_out"); err != nil {
 		return err
@@ -577,7 +602,7 @@ func NewMakeStatisticCommand() *MakeStatisticCommand {
 	return &MakeStatisticCommand{}
 }
 
-func (c *MakeStatisticCommand) Serve(s model.Situation) error {
+func (c *MakeStatisticCommand) Serve(s *model.Situation) error {
 	text := assets.LangText(s.User.Language, "statistic_to_user")
 
 	text = getDate(text)
@@ -592,7 +617,7 @@ func NewMakeMoneyMsgCommand() *MakeMoneyMsgCommand {
 	return &MakeMoneyMsgCommand{}
 }
 
-func (c *MakeMoneyMsgCommand) Serve(s model.Situation) error {
+func (c *MakeMoneyMsgCommand) Serve(s *model.Situation) error {
 	if s.Message.Voice == nil {
 		msg := tgbotapi.NewMessage(s.Message.Chat.ID, assets.LangText(s.User.Language, "voice_not_recognized"))
 		_ = msgs.SendMsgToUser(s.BotLang, msg)
@@ -609,14 +634,14 @@ func NewMoreMoneyCommand() *MoreMoneyCommand {
 	return &MoreMoneyCommand{}
 }
 
-func (c *MoreMoneyCommand) Serve(s model.Situation) error {
+func (c *MoreMoneyCommand) Serve(s *model.Situation) error {
 	model.MoreMoneyButtonClick.WithLabelValues(
 		model.GetGlobalBot(s.BotLang).BotLink,
 		s.BotLang,
 	).Inc()
 
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
-	text := msgs.GetFormatText(s.User.Language, "more_money_text",
+	text := assets.LangText(s.User.Language, "more_money_text",
 		assets.AdminSettings.Parameters[s.BotLang].BonusAmount, assets.AdminSettings.Parameters[s.BotLang].BonusAmount)
 
 	markup := msgs.NewIlMarkUp(
@@ -627,7 +652,7 @@ func (c *MoreMoneyCommand) Serve(s model.Situation) error {
 	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markup, text)
 }
 
-func simpleAdminMsg(s model.Situation, key string) error {
+func simpleAdminMsg(s *model.Situation, key string) error {
 	text := assets.AdminText(s.User.Language, key)
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 

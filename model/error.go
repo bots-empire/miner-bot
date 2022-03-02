@@ -8,7 +8,11 @@ const (
 	// ErrFoundTwoUsers error found two user account for one user.
 	ErrFoundTwoUsers = Error("found two users")
 
+	// ErrNotSelectedLanguage error not selected language.
 	ErrNotSelectedLanguage = Error("not selected language")
+
+	// ErrMaxLevelAlreadyCompleted error user already have max level.
+	ErrMaxLevelAlreadyCompleted = Error("user already have max level")
 
 	// ErrScanSqlRow error scan sql row.
 	ErrScanSqlRow = Error("failed scan sql row")

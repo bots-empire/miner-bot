@@ -30,6 +30,7 @@ func (h *CallBackHandlers) Init() {
 
 	// Money commands
 	h.OnCommand("/make_money_click", NewHandleClickCommand())
+	h.OnCommand("/upgrade_miner_lvl", NewUpgradeMinerLvlCommand())
 	h.OnCommand("/send_bonus_to_user", NewGetBonusCommand())
 	h.OnCommand("/withdrawal_money", NewRecheckSubscribeCommand())
 	h.OnCommand("/promotion_case", NewPromotionCaseCommand())
@@ -39,7 +40,7 @@ func (h *CallBackHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-func checkCallbackQuery(s model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
+func checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
 	if strings.Contains(s.Params.Level, "admin") {
 		if err := administrator.CheckAdminCallback(s); err != nil {
 			logger.Warn("error with serve admin callback command: %s", err.Error())
@@ -69,7 +70,7 @@ func NewLanguageCommand() *LanguageCommand {
 	return &LanguageCommand{}
 }
 
-func (c *LanguageCommand) Serve(s model.Situation) error {
+func (c *LanguageCommand) Serve(s *model.Situation) error {
 	lang := strings.Split(s.CallbackQuery.Data, "?")[1]
 
 	level := db.GetLevel(s.BotLang, s.User.ID)
@@ -89,7 +90,7 @@ func NewHandleClickCommand() *HandleClickCommand {
 	return &HandleClickCommand{}
 }
 
-func (c *HandleClickCommand) Serve(s model.Situation) error {
+func (c *HandleClickCommand) Serve(s *model.Situation) error {
 	err, ok := auth.MakeClick(s)
 	if err != nil {
 		return errors.Wrap(err, "failed make click")
@@ -109,6 +110,37 @@ func (c *HandleClickCommand) Serve(s model.Situation) error {
 	return msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, oldMsgID, markUp, text)
 }
 
+type UpgradeMinerLvlCommand struct {
+}
+
+func NewUpgradeMinerLvlCommand() *UpgradeMinerLvlCommand {
+	return &UpgradeMinerLvlCommand{}
+}
+
+func (c *UpgradeMinerLvlCommand) Serve(s *model.Situation) error {
+	nilBalance, err := auth.UpgradeMinerLevel(s)
+	if err == model.ErrMaxLevelAlreadyCompleted{
+		return reachedMaxMinerLvl(s)
+	}
+	if err != nil {
+		return err
+	}
+
+	if nilBalance {
+		text := assets.LangText(s.User.Language, "failed_upgrade_miner")
+
+		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+	}
+
+	_ = msgs.SendMsgToUser(s.BotLang, tgbotapi.NewDeleteMessage(s.User.ID, s.CallbackQuery.Message.MessageID))
+
+	text := assets.LangText(s.User.Language, "successful_upgrade_miner",
+		s.User.MinerLevel,
+		assets.AdminSettings.Parameters[s.BotLang].UpgradeMinerCost[s.User.MinerLevel-2])
+
+	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+}
+
 type GetBonusCommand struct {
 }
 
@@ -116,7 +148,7 @@ func NewGetBonusCommand() *GetBonusCommand {
 	return &GetBonusCommand{}
 }
 
-func (c *GetBonusCommand) Serve(s model.Situation) error {
+func (c *GetBonusCommand) Serve(s *model.Situation) error {
 	return auth.GetABonus(s)
 }
 
@@ -127,7 +159,7 @@ func NewRecheckSubscribeCommand() *RecheckSubscribeCommand {
 	return &RecheckSubscribeCommand{}
 }
 
-func (c *RecheckSubscribeCommand) Serve(s model.Situation) error {
+func (c *RecheckSubscribeCommand) Serve(s *model.Situation) error {
 	amount := strings.Split(s.CallbackQuery.Data, "?")[1]
 	s.Message = &tgbotapi.Message{
 		Text: amount,
@@ -152,7 +184,7 @@ func NewPromotionCaseCommand() *PromotionCaseCommand {
 	return &PromotionCaseCommand{}
 }
 
-func (c *PromotionCaseCommand) Serve(s model.Situation) error {
+func (c *PromotionCaseCommand) Serve(s *model.Situation) error {
 	cost, err := strconv.Atoi(strings.Split(s.CallbackQuery.Data, "?")[1])
 	if err != nil {
 		return err

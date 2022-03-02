@@ -5,7 +5,7 @@ import (
 
 	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/db"
-	model2 "github.com/Stepan1328/miner-bot/model"
+	model "github.com/Stepan1328/miner-bot/model"
 	"github.com/Stepan1328/miner-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
@@ -27,7 +27,7 @@ func NewMakeMoneySettingCommand() *MakeMoneySettingCommand {
 	return &MakeMoneySettingCommand{}
 }
 
-func (c *MakeMoneySettingCommand) Serve(s model2.Situation) error {
+func (c *MakeMoneySettingCommand) Serve(s *model.Situation) error {
 
 	markUp, text := sendMakeMoneyMenu(s.BotLang, s.User.ID)
 
@@ -75,7 +75,7 @@ func NewChangeParameterCommand() *ChangeParameterCommand {
 	return &ChangeParameterCommand{}
 }
 
-func (c *ChangeParameterCommand) Serve(s model2.Situation) error {
+func (c *ChangeParameterCommand) Serve(s *model.Situation) error {
 	changeParameter := strings.Split(s.CallbackQuery.Data, "?")[1]
 
 	lang := assets.AdminLang(s.User.ID)

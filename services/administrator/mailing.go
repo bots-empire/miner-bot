@@ -17,7 +17,7 @@ func NewStartMailingCommand() *StartMailingCommand {
 	return &StartMailingCommand{}
 }
 
-func (c *StartMailingCommand) Serve(s model.Situation) error {
+func (c *StartMailingCommand) Serve(s *model.Situation) error {
 	go db.StartMailing(s.BotLang, s.User)
 	_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "mailing_successful")
 	return resendAdvertisementMenuLevel(s.BotLang, s.User.ID)
@@ -30,7 +30,7 @@ func NewSelectedLangCommand() *SelectedLangCommand {
 	return &SelectedLangCommand{}
 }
 
-func (c *SelectedLangCommand) Serve(s model.Situation) error {
+func (c *SelectedLangCommand) Serve(s *model.Situation) error {
 	data := strings.Split(s.CallbackQuery.Data, "?")
 	partition := data[1]
 	lang := data[2]

@@ -22,7 +22,7 @@ type Admin struct {
 	Parameters      map[string]*Params
 	AdvertisingChan map[string]*AdvertChannel
 	BlockedUsers    map[string]int
-	LangSelectedMap map[string]bool
+	LangSelectedMap map[string]bool //TODO: refactor lang selected map
 	AdvertisingText map[string]string
 }
 
@@ -32,12 +32,16 @@ type AdminUser struct {
 	SpecialPossibility bool
 }
 
-type Params struct { // TODO: rename fields
+type Params struct {
 	BonusAmount         int
 	MinWithdrawalAmount int
 	ClickAmount         []int
+	UpgradeMinerCost    []int
 	MaxOfClickPerDay    int
 	ReferralAmount      int
+
+	ExchangeHashToBTC     int // 0.00000001 BTC = ExchangeHashToBTC hashes
+	ExchangeBTCToCurrency int // 0.00000001 * ExchangeBTCToCurrency BTC = 1 USD/EUR
 
 	Currency string
 }

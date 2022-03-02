@@ -111,7 +111,7 @@ func startHandlers(logger log.Logger) {
 	//				ID: 1418862576,
 	//			},
 	//		},
-	//		Data: "/make_money_click",
+	//		data: "/make_money_click",
 	//	},
 	//}
 	//
