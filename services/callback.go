@@ -119,7 +119,7 @@ func NewUpgradeMinerLvlCommand() *UpgradeMinerLvlCommand {
 
 func (c *UpgradeMinerLvlCommand) Serve(s *model.Situation) error {
 	nilBalance, err := auth.UpgradeMinerLevel(s)
-	if err == model.ErrMaxLevelAlreadyCompleted{
+	if err == model.ErrMaxLevelAlreadyCompleted {
 		return reachedMaxMinerLvl(s)
 	}
 	if err != nil {

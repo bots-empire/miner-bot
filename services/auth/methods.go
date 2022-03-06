@@ -14,6 +14,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	oneSatoshi = 0.00000001
+)
+
 func MakeClick(s *model.Situation) (error, bool) {
 	if time.Now().Unix()/86400 > s.User.LastClick/86400 {
 		if err := resetTodayMiningCounter(s); err != nil {
@@ -87,6 +91,43 @@ WHERE id = ?;`,
 
 func getClickAmount(botLang string, minerLevel int8) int {
 	return assets.AdminSettings.Parameters[botLang].ClickAmount[minerLevel-1]
+}
+
+func ChangeHashToBTC(s *model.Situation) (error, float64) {
+	count, err := extractAmountFromMsg(s.Message.Text)
+	if err != nil {
+		return nil, 0
+	}
+
+	if count <= 0 || count > s.User.BalanceHash {
+		return nil, 0
+	}
+
+	amountBTC := count / assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
+	clearAmount := amountBTC * assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
+	amountToChange := oneSatoshi * float64(amountBTC)
+
+	dataBase := model.GetDB(s.BotLang)
+	_, err = dataBase.Exec(`
+UPDATE users 
+	SET balance_hash = balance_hash - ?, 
+	    balance_btc = balance_btc + ?
+WHERE id = ?;`,
+		clearAmount,
+		amountToChange,
+		s.User.ID)
+	if err != nil {
+		text := "Failed exchange hash to btc: " + err.Error()
+		msgs.SendNotificationToDeveloper(text)
+		return err, 0
+	}
+
+	s.User.BalanceBTC += amountToChange
+	return nil, amountToChange
+}
+
+func extractAmountFromMsg(text string) (int, error) {
+	return strconv.Atoi(text)
 }
 
 func UpgradeMinerLevel(s *model.Situation) (bool, error) {

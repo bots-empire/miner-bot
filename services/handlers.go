@@ -14,6 +14,7 @@ import (
 	"github.com/Stepan1328/miner-bot/services/auth"
 	"github.com/Stepan1328/miner-bot/utils"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -41,6 +42,7 @@ func (h *MessagesHandlers) Init() {
 	h.OnCommand("/main_make_money", NewMakeMoneyCommand())
 	h.OnCommand("/make_money_click", NewMakeClickCommand())
 	h.OnCommand("/make_money_buy_btc", NewBuyBTCCommand())
+	h.OnCommand("/change_hash_to_btc", NewChangeHashToBTCCommand())
 	h.OnCommand("/make_money_lvl_up", NewLvlUpMinerCommand())
 	h.OnCommand("/main_profile", NewSendProfileCommand())
 	h.OnCommand("/new_make_money", NewMakeMoneyMsgCommand())
@@ -315,7 +317,7 @@ func NewMakeClickCommand() *MakeClickCommand {
 }
 
 func (c *MakeClickCommand) Serve(s *model.Situation) error {
-	db.RdbSetUser(s.BotLang, s.User.ID, "make")
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	text, markUp := buildClickMsg(s.BotLang, s.User)
 
@@ -334,7 +336,7 @@ func buildClickMsg(botLang string, user *model.User) (string, *tgbotapi.InlineKe
 		assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay,
 		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay)*100),
 		"%",
-		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel - 1],
+		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel-1],
 		user.MinerLevel,
 		user.BalanceHash)
 
@@ -353,12 +355,44 @@ func NewBuyBTCCommand() *BuyBTCCommand {
 }
 
 func (c *BuyBTCCommand) Serve(s *model.Situation) error {
-	db.RdbSetUser(s.BotLang, s.User.ID, "change_buy_btc")
+	db.RdbSetUser(s.BotLang, s.User.ID, "/change_hash_to_btc")
 
 	text := assets.LangText(s.User.Language, "change_buy_btc_text",
 		s.User.BalanceHash, assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
 
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+}
+
+type ChangeHashToBTCCommand struct {
+}
+
+func NewChangeHashToBTCCommand() *ChangeHashToBTCCommand {
+	return &ChangeHashToBTCCommand{}
+}
+
+func (c *ChangeHashToBTCCommand) Serve(s *model.Situation) error {
+	err, amount := auth.ChangeHashToBTC(s)
+	if err != nil {
+		return errors.Wrap(err, "change hash to btc")
+	}
+
+	if amount == 0 {
+		text := assets.LangText(s.User.Language, "invalid_amount_to_change",
+			assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
+
+		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+	}
+
+	text := assets.LangText(s.User.Language, "successful_exchange_hash_to_btc",
+		amount,
+		s.User.BalanceBTC)
+
+	if err := msgs.NewParseMessage(s.BotLang, s.User.ID, text); err != nil {
+		return errors.Wrap(err, "send successful message")
+	}
+
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+	return NewStartCommand().Serve(s)
 }
 
 type LvlUpMinerCommand struct {
@@ -408,7 +442,13 @@ func (c *SendProfileCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
 	text := assets.LangText(s.User.Language, "profile_text",
-		s.Message.From.FirstName, s.Message.From.UserName, s.User.Balance, s.User.MiningToday, s.User.ReferralCount)
+		s.Message.From.FirstName,
+		s.Message.From.UserName,
+		s.User.Balance,
+		s.User.BalanceBTC,
+		s.User.BalanceHash,
+		s.User.MinerLevel,
+		s.User.ReferralCount)
 
 	if len(model.GetGlobalBot(s.BotLang).LanguageInBot) > 1 {
 		ReplyMarkup := createLangMenu(model.GetGlobalBot(s.BotLang).LanguageInBot)
