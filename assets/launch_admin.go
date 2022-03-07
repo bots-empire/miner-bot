@@ -40,8 +40,8 @@ type Params struct {
 	MaxOfClickPerDay    int
 	ReferralAmount      int
 
-	ExchangeHashToBTC     int // 0.00000001 BTC = ExchangeHashToBTC hashes
-	ExchangeBTCToCurrency int // 0.00000001 * ExchangeBTCToCurrency BTC = 1 USD/EUR
+	ExchangeHashToBTC     int     // 0.00000001 BTC = ExchangeHashToBTC hashes
+	ExchangeBTCToCurrency float64 // 0.00000001 * ExchangeBTCToCurrency BTC = 1 USD/EUR
 
 	Currency string
 }

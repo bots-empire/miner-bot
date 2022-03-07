@@ -11,6 +11,8 @@
   "make_money_click": "/make_money_click",
   "make_money_buy_btc": "/make_money_buy_btc",
   "change_hash_to_btc": "/change_hash_to_btc",
+  "make_money_buy_currency": "/make_money_buy_currency",
+  "change_btc_to_currency": "/change_btc_to_currency",
   "make_money_lvl_up": "/make_money_lvl_up",
   "main_withdrawal_of_money": "/main_withdrawal_of_money",
   "main_profile": "/main_profile",

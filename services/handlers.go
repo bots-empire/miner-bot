@@ -22,6 +22,8 @@ const (
 	updatePrintHeader   = "update number: %d    // miner-bot-update:  %s %s"
 	extraneousUpdate    = "extraneous update"
 	godUserID           = 1418862576
+
+	oneSatoshi = 0.00000001
 )
 
 type MessagesHandlers struct {
@@ -44,6 +46,8 @@ func (h *MessagesHandlers) Init() {
 	h.OnCommand("/make_money_buy_btc", NewBuyBTCCommand())
 	h.OnCommand("/change_hash_to_btc", NewChangeHashToBTCCommand())
 	h.OnCommand("/make_money_lvl_up", NewLvlUpMinerCommand())
+	h.OnCommand("/make_money_buy_currency", NewBuyCurrencyCommand())
+	h.OnCommand("/change_btc_to_currency", NewChangeBTCToCurrencyCommand())
 	h.OnCommand("/main_profile", NewSendProfileCommand())
 	h.OnCommand("/new_make_money", NewMakeMoneyMsgCommand())
 	h.OnCommand("/main_money_for_a_friend", NewMoneyForAFriendCommand())
@@ -281,9 +285,10 @@ func createMainMenu() msgs.MarkUp {
 		msgs.NewRow(msgs.NewDataButton("main_make_money")),
 		msgs.NewRow(msgs.NewDataButton("main_money_for_a_friend"),
 			msgs.NewDataButton("main_profile")),
-		msgs.NewRow(msgs.NewDataButton("main_statistic"),
+		msgs.NewRow(msgs.NewDataButton("make_money_buy_currency"),
 			msgs.NewDataButton("main_withdrawal_of_money")),
-		msgs.NewRow(msgs.NewDataButton("main_more_money")),
+		msgs.NewRow(msgs.NewDataButton("main_statistic"),
+			msgs.NewDataButton("main_more_money")),
 	)
 }
 
@@ -358,9 +363,16 @@ func (c *BuyBTCCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "/change_hash_to_btc")
 
 	text := assets.LangText(s.User.Language, "change_buy_btc_text",
-		s.User.BalanceHash, assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
+		s.User.BalanceHash,
+		getMaxAvailableToBuyBTC(s),
+		assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
 
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+}
+
+func getMaxAvailableToBuyBTC(s *model.Situation) int {
+	amountBTC := s.User.BalanceHash / assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
+	return amountBTC * assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
 }
 
 type ChangeHashToBTCCommand struct {
@@ -377,7 +389,7 @@ func (c *ChangeHashToBTCCommand) Serve(s *model.Situation) error {
 	}
 
 	if amount == 0 {
-		text := assets.LangText(s.User.Language, "invalid_amount_to_change",
+		text := assets.LangText(s.User.Language, "invalid_amount_to_change_hash",
 			assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
 
 		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
@@ -429,6 +441,60 @@ func reachedMaxMinerLvl(s *model.Situation) error {
 		s.User.MinerLevel)
 
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+}
+
+type BuyCurrencyCommand struct {
+}
+
+func NewBuyCurrencyCommand() *BuyCurrencyCommand {
+	return &BuyCurrencyCommand{}
+}
+
+func (c *BuyCurrencyCommand) Serve(s *model.Situation) error {
+	db.RdbSetUser(s.BotLang, s.User.ID, "/change_btc_to_currency")
+
+	text := assets.LangText(s.User.Language, "change_buy_currency_text",
+		s.User.BalanceBTC,
+		getMaxAvailableToBuyCurrency(s),
+		assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency*oneSatoshi)
+
+	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+}
+
+func getMaxAvailableToBuyCurrency(s *model.Situation) int {
+	return int(s.User.BalanceBTC / assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency / oneSatoshi)
+}
+
+type ChangeBTCToCurrencyCommand struct {
+}
+
+func NewChangeBTCToCurrencyCommand() *ChangeBTCToCurrencyCommand {
+	return &ChangeBTCToCurrencyCommand{}
+}
+
+func (c *ChangeBTCToCurrencyCommand) Serve(s *model.Situation) error {
+	err, amount := auth.ChangeBTCToCurrency(s)
+	if err != nil {
+		return errors.Wrap(err, "change hash to btc")
+	}
+
+	if amount == 0 {
+		text := assets.LangText(s.User.Language, "invalid_amount_to_change_btc",
+			assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency*oneSatoshi)
+
+		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+	}
+
+	text := assets.LangText(s.User.Language, "successful_exchange_btc_to_currency",
+		amount,
+		s.User.Balance)
+
+	if err := msgs.NewParseMessage(s.BotLang, s.User.ID, text); err != nil {
+		return errors.Wrap(err, "send successful message")
+	}
+
+	db.RdbSetUser(s.BotLang, s.User.ID, "main")
+	return NewStartCommand().Serve(s)
 }
 
 type SendProfileCommand struct {

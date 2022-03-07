@@ -130,6 +130,36 @@ func extractAmountFromMsg(text string) (int, error) {
 	return strconv.Atoi(text)
 }
 
+func ChangeBTCToCurrency(s *model.Situation) (error, int) {
+	count, err := extractAmountFromMsg(s.Message.Text)
+	if err != nil {
+		return nil, 0
+	}
+
+	amountBTC := float64(count) * assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency * oneSatoshi
+	if count <= 0 || amountBTC > s.User.BalanceBTC {
+		return nil, 0
+	}
+
+	dataBase := model.GetDB(s.BotLang)
+	_, err = dataBase.Exec(`
+UPDATE users 
+	SET balance_btc = balance_btc - ?, 
+	    balance = balance + ?
+WHERE id = ?;`,
+		amountBTC,
+		count,
+		s.User.ID)
+	if err != nil {
+		text := "Failed exchange btc to currency: " + err.Error()
+		msgs.SendNotificationToDeveloper(text)
+		return err, 0
+	}
+
+	s.User.Balance += count
+	return nil, count
+}
+
 func UpgradeMinerLevel(s *model.Situation) (bool, error) {
 	var err error
 	s.User, err = GetUser(s.BotLang, s.User.ID)
