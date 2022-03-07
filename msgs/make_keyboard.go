@@ -184,3 +184,19 @@ func (b InlineAdminButton) build(lang string) tgbotapi.InlineKeyboardButton {
 	text := assets.AdminText(lang, b.textKey)
 	return tgbotapi.NewInlineKeyboardButtonData(text, b.data)
 }
+
+type InlineCustomButton struct {
+	text string
+	data string
+}
+
+func NewInlineCustomButton(text, data string) InlineCustomButton {
+	return InlineCustomButton{
+		text: text,
+		data: data,
+	}
+}
+
+func (b InlineCustomButton) build(lang string) tgbotapi.InlineKeyboardButton {
+	return tgbotapi.NewInlineKeyboardButtonData(b.text, b.data)
+}

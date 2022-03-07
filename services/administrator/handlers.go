@@ -51,7 +51,7 @@ func (c *UpdateParameterCommand) Serve(s *model.Situation) error {
 	partition := strings.Split(s.Params.Level, "?")[1]
 
 	if partition == currencyType {
-		assets.AdminSettings.Parameters[s.BotLang].Currency = s.Message.Text
+		assets.AdminSettings.GetParams(s.BotLang).Currency = s.Message.Text
 	} else {
 		err := setNewIntParameter(s, partition)
 		if err != nil {
@@ -81,15 +81,11 @@ func setNewIntParameter(s *model.Situation, partition string) error {
 
 	switch partition {
 	case bonusAmount:
-		assets.AdminSettings.Parameters[s.BotLang].BonusAmount = newAmount
+		assets.AdminSettings.GetParams(s.BotLang).BonusAmount = newAmount
 	case minWithdrawalAmount:
-		assets.AdminSettings.Parameters[s.BotLang].MinWithdrawalAmount = newAmount
-	case voiceAmount:
-		assets.AdminSettings.Parameters[s.BotLang].ClickAmount[0] = newAmount
-	case voicePDAmount:
-		assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay = newAmount
+		assets.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount = newAmount
 	case referralAmount:
-		assets.AdminSettings.Parameters[s.BotLang].ReferralAmount = newAmount
+		assets.AdminSettings.GetParams(s.BotLang).ReferralAmount = newAmount
 	}
 
 	return nil
@@ -115,9 +111,9 @@ func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
 			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 		}
 
-		assets.AdminSettings.AdvertisingChan[s.BotLang] = advertChan
+		assets.AdminSettings.UpdateAdvertChan(s.BotLang, advertChan)
 	case "change_text":
-		assets.AdminSettings.AdvertisingText[s.BotLang] = s.Message.Text
+		assets.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text)
 	}
 	assets.SaveAdminSettings()
 	status = "operation_completed"

@@ -24,8 +24,6 @@
   "change_bonus_amount_button": "One-time bonus \uD83D\uDCB0",
   "set_new_amount_text": "<b>%s:</b> %d\n\nEnter the new value on the keyboard ⤵️",
   "change_min_withdrawal_amount_button": "Min for withdrawal \uD83D\uDCB3",
-  "change_voice_amount_button": "Voice revenue \uD83D\uDDE3",
-  "change_voice_pd_amount_button": "Number of voice msg \uD83E\uDDEE",
   "change_referral_amount_button": "Referral income \uD83D\uDCBC",
   "back_to_make_money_setting": "← Back to ⚙️ of Earnings",
   "operation_canceled": "The change operation was canceled ❎",

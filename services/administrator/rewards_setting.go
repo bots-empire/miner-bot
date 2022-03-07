@@ -5,7 +5,7 @@ import (
 
 	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/db"
-	model "github.com/Stepan1328/miner-bot/model"
+	"github.com/Stepan1328/miner-bot/model"
 	"github.com/Stepan1328/miner-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
@@ -14,8 +14,6 @@ import (
 const (
 	bonusAmount         = "bonus_amount"
 	minWithdrawalAmount = "min_withdrawal_amount"
-	voiceAmount         = "voice_amount"
-	voicePDAmount       = "voice_pd_amount"
 	referralAmount      = "referral_amount"
 	currencyType        = "currency_type"
 )
@@ -57,8 +55,8 @@ func sendMakeMoneyMenu(botLang string, userID int64) (*tgbotapi.InlineKeyboardMa
 	markUp := msgs.NewIlMarkUp(
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_bonus_amount_button", "admin/make_money?bonus_amount")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_min_withdrawal_amount_button", "admin/make_money?min_withdrawal_amount")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_voice_amount_button", "admin/make_money?voice_amount")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("change_voice_pd_amount_button", "admin/make_money?voice_pd_amount")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_miner_settings_button", "admin/miner_settings")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_exchange_rate_button", "admin/exchange_rate")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_referral_amount_button", "admin/make_money?referral_amount")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_currency_type_button", "admin/make_money?currency_type")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_main_menu", "admin/send_menu")),
@@ -87,22 +85,16 @@ func (c *ChangeParameterCommand) Serve(s *model.Situation) error {
 	switch changeParameter {
 	case bonusAmount:
 		parameter = assets.AdminText(lang, "change_bonus_amount_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].BonusAmount
+		value = assets.AdminSettings.GetParams(s.BotLang).BonusAmount
 	case minWithdrawalAmount:
 		parameter = assets.AdminText(lang, "change_min_withdrawal_amount_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].MinWithdrawalAmount
-	case voiceAmount:
-		parameter = assets.AdminText(lang, "change_voice_amount_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].ClickAmount
-	case voicePDAmount:
-		parameter = assets.AdminText(lang, "change_voice_pd_amount_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay
+		value = assets.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount
 	case referralAmount:
 		parameter = assets.AdminText(lang, "change_referral_amount_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].ReferralAmount
+		value = assets.AdminSettings.GetParams(s.BotLang).ReferralAmount
 	case currencyType:
 		parameter = assets.AdminText(lang, "change_currency_type_button")
-		value = assets.AdminSettings.Parameters[s.BotLang].Currency
+		value = assets.AdminSettings.GetParams(s.BotLang).Currency
 	}
 
 	text = adminFormatText(lang, "set_new_amount_text", parameter, value)

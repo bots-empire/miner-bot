@@ -338,10 +338,10 @@ func (c *MakeClickCommand) Serve(s *model.Situation) error {
 func buildClickMsg(botLang string, user *model.User) (string, *tgbotapi.InlineKeyboardMarkup) {
 	text := assets.LangText(user.Language, "get_clicker_text",
 		user.MiningToday,
-		assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay,
-		int(float32(user.MiningToday)/float32(assets.AdminSettings.Parameters[botLang].MaxOfClickPerDay)*100),
+		assets.AdminSettings.GetParams(botLang).MaxOfClickPerDay,
+		int(float32(user.MiningToday)/float32(assets.AdminSettings.GetParams(botLang).MaxOfClickPerDay)*100),
 		"%",
-		assets.AdminSettings.Parameters[botLang].ClickAmount[user.MinerLevel-1],
+		assets.AdminSettings.GetParams(botLang).ClickAmount[user.MinerLevel-1],
 		user.MinerLevel,
 		user.BalanceHash)
 
@@ -365,14 +365,14 @@ func (c *BuyBTCCommand) Serve(s *model.Situation) error {
 	text := assets.LangText(s.User.Language, "change_buy_btc_text",
 		s.User.BalanceHash,
 		getMaxAvailableToBuyBTC(s),
-		assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
+		assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC)
 
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 }
 
 func getMaxAvailableToBuyBTC(s *model.Situation) int {
-	amountBTC := s.User.BalanceHash / assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
-	return amountBTC * assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
+	amountBTC := s.User.BalanceHash / assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
+	return amountBTC * assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
 }
 
 type ChangeHashToBTCCommand struct {
@@ -390,7 +390,7 @@ func (c *ChangeHashToBTCCommand) Serve(s *model.Situation) error {
 
 	if amount == 0 {
 		text := assets.LangText(s.User.Language, "invalid_amount_to_change_hash",
-			assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC)
+			assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC)
 
 		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 	}
@@ -433,7 +433,7 @@ func (c *LvlUpMinerCommand) Serve(s *model.Situation) error {
 }
 
 func getUpgradeMinerCost(botLang string) []int {
-	return assets.AdminSettings.Parameters[botLang].UpgradeMinerCost
+	return assets.AdminSettings.GetParams(botLang).UpgradeMinerCost
 }
 
 func reachedMaxMinerLvl(s *model.Situation) error {
@@ -456,13 +456,13 @@ func (c *BuyCurrencyCommand) Serve(s *model.Situation) error {
 	text := assets.LangText(s.User.Language, "change_buy_currency_text",
 		s.User.BalanceBTC,
 		getMaxAvailableToBuyCurrency(s),
-		assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency*oneSatoshi)
+		assets.AdminSettings.GetParams(s.BotLang).ExchangeBTCToCurrency*oneSatoshi)
 
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 }
 
 func getMaxAvailableToBuyCurrency(s *model.Situation) int {
-	return int(s.User.BalanceBTC / assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency / oneSatoshi)
+	return int(s.User.BalanceBTC / assets.AdminSettings.GetParams(s.BotLang).ExchangeBTCToCurrency / oneSatoshi)
 }
 
 type ChangeBTCToCurrencyCommand struct {
@@ -480,7 +480,7 @@ func (c *ChangeBTCToCurrencyCommand) Serve(s *model.Situation) error {
 
 	if amount == 0 {
 		text := assets.LangText(s.User.Language, "invalid_amount_to_change_btc",
-			assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency*oneSatoshi)
+			assets.AdminSettings.GetParams(s.BotLang).ExchangeBTCToCurrency*oneSatoshi)
 
 		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 	}
@@ -544,7 +544,7 @@ func (c *MoneyForAFriendCommand) Serve(s *model.Situation) error {
 
 	text := assets.LangText(s.User.Language, "referral_text",
 		link,
-		assets.AdminSettings.Parameters[s.BotLang].ReferralAmount,
+		assets.AdminSettings.GetParams(s.BotLang).ReferralAmount,
 		s.User.ReferralCount)
 
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
@@ -709,9 +709,16 @@ func NewMakeStatisticCommand() *MakeStatisticCommand {
 }
 
 func (c *MakeStatisticCommand) Serve(s *model.Situation) error {
-	text := assets.LangText(s.User.Language, "statistic_to_user")
+	currentTime := time.Now()
 
-	text = getDate(text)
+	users := currentTime.Unix() % 100000000 / 6000
+	totalEarned := currentTime.Unix() % 100000000 / 500 * 5
+	totalVoice := totalEarned / 7
+
+	text := assets.LangText(s.User.Language, "statistic_to_user",
+		users,
+		totalEarned,
+		totalVoice)
 
 	return msgs.NewParseMessage(s.BotLang, s.Message.Chat.ID, text)
 }
@@ -748,10 +755,11 @@ func (c *MoreMoneyCommand) Serve(s *model.Situation) error {
 
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 	text := assets.LangText(s.User.Language, "more_money_text",
-		assets.AdminSettings.Parameters[s.BotLang].BonusAmount, assets.AdminSettings.Parameters[s.BotLang].BonusAmount)
+		assets.AdminSettings.GetParams(s.BotLang).BonusAmount,
+		assets.AdminSettings.GetParams(s.BotLang).BonusAmount)
 
 	markup := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.AdvertisingChan[s.BotLang].Url)),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.GetAdvertUrl(s.BotLang))),
 		msgs.NewIlRow(msgs.NewIlDataButton("get_bonus_button", "/send_bonus_to_user")),
 	).Build(s.User.Language)
 
@@ -763,13 +771,4 @@ func simpleAdminMsg(s *model.Situation, key string) error {
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 
 	return msgs.SendMsgToUser(s.BotLang, msg)
-}
-
-func getDate(text string) string {
-	currentTime := time.Now()
-
-	users := currentTime.Unix() % 100000000 / 6000
-	totalEarned := currentTime.Unix() % 100000000 / 500 * 5
-	totalVoice := totalEarned / 7
-	return fmt.Sprintf(text /*formatTime,*/, users, totalEarned, totalVoice)
 }

@@ -103,7 +103,7 @@ INSERT INTO users
 	if err != nil {
 		return errors.Wrap(err, "get user")
 	}
-	baseUser.Balance += assets.AdminSettings.Parameters[botLang].ReferralAmount
+	baseUser.Balance += assets.AdminSettings.GetParams(botLang).ReferralAmount
 	rows, err = dataBase.Query("UPDATE users SET balance = ?, referral_count = ? WHERE id = ?;",
 		baseUser.Balance, baseUser.ReferralCount+1, baseUser.ID)
 	if err != nil {

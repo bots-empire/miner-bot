@@ -145,5 +145,5 @@ func PinMsgToDeveloper(msgID int) {
 }
 
 func insertCurrency(botLang string, text string) string {
-	return strings.Replace(text, currency, assets.AdminSettings.Parameters[botLang].Currency, -1)
+	return strings.Replace(text, currency, assets.AdminSettings.GetCurrency(botLang), -1)
 }

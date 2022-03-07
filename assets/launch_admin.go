@@ -15,40 +15,45 @@ import (
 const (
 	adminPath      = "assets/admin"
 	jsonFormatName = ".json"
+
+	oneSatoshi = 0.00000001
 )
 
 type Admin struct {
-	AdminID         map[int64]*AdminUser
-	Parameters      map[string]*Params
-	AdvertisingChan map[string]*AdvertChannel
-	BlockedUsers    map[string]int
-	LangSelectedMap map[string]bool //TODO: refactor lang selected map
-	AdvertisingText map[string]string
+	AdminID          map[int64]*AdminUser         `json:"admin_id"`
+	GlobalParameters map[string]*GlobalParameters `json:"global_parameters"`
+}
+
+type GlobalParameters struct {
+	Parameters      *Params        `json:"parameters"`
+	AdvertisingChan *AdvertChannel `json:"advertising_chan"`
+	BlockedUsers    int            `json:"blocked_users"`
+	AdvertisingText string         `json:"advertising_text"`
 }
 
 type AdminUser struct {
-	Language           string
-	FirstName          string
-	SpecialPossibility bool
+	Language           string `json:"language"`
+	FirstName          string `json:"first_name"`
+	SpecialPossibility bool   `json:"special_possibility"`
 }
 
 type Params struct {
-	BonusAmount         int
-	MinWithdrawalAmount int
-	ClickAmount         []int
-	UpgradeMinerCost    []int
-	MaxOfClickPerDay    int
-	ReferralAmount      int
+	BonusAmount         int   `json:"bonus_amount"`
+	MinWithdrawalAmount int   `json:"min_withdrawal_amount"`
+	ClickAmount         []int `json:"click_amount"`
+	UpgradeMinerCost    []int `json:"upgrade_miner_cost"`
+	MaxOfClickPerDay    int   `json:"max_of_click_per_day"`
+	ReferralAmount      int   `json:"referral_amount"`
 
-	ExchangeHashToBTC     int     // 0.00000001 BTC = ExchangeHashToBTC hashes
-	ExchangeBTCToCurrency float64 // 0.00000001 * ExchangeBTCToCurrency BTC = 1 USD/EUR
+	ExchangeHashToBTC     int     `json:"exchange_hash_to_btc"`     // 0.00000001 BTC = ExchangeHashToBTC hashes
+	ExchangeBTCToCurrency float64 `json:"exchange_btc_to_currency"` // 0.00000001 * ExchangeBTCToCurrency BTC = 1 USD/EUR
 
-	Currency string
+	Currency string `json:"currency"`
 }
 
 type AdvertChannel struct {
-	Url       string
-	ChannelID int64
+	Url       string `json:"url"`
+	ChannelID int64  `json:"channel_id"`
 }
 
 var AdminSettings *Admin
@@ -66,9 +71,9 @@ func UploadAdminSettings() {
 	}
 
 	for lang, globalBot := range model.Bots {
-		nilSettings(settings, lang)
+		validateSettings(settings, lang)
 		for _, lang = range globalBot.LanguageInBot {
-			nilSettings(settings, lang)
+			validateSettings(settings, lang)
 		}
 	}
 
@@ -76,12 +81,25 @@ func UploadAdminSettings() {
 	SaveAdminSettings()
 }
 
-func nilSettings(settings *Admin, lang string) {
-	if settings.Parameters[lang] == nil {
-		settings.Parameters[lang] = &Params{}
+func validateSettings(settings *Admin, lang string) {
+	if settings.GlobalParameters == nil {
+		settings.GlobalParameters = make(map[string]*GlobalParameters)
 	}
-	if settings.AdvertisingChan[lang] == nil {
-		settings.AdvertisingChan[lang] = &AdvertChannel{
+
+	if settings.GlobalParameters[lang] == nil {
+		settings.GlobalParameters[lang] = &GlobalParameters{}
+	}
+
+	if settings.GlobalParameters[lang].Parameters == nil {
+		settings.GlobalParameters[lang].Parameters = &Params{
+			ClickAmount:           []int{1},
+			ExchangeHashToBTC:     1,
+			ExchangeBTCToCurrency: oneSatoshi,
+		}
+	}
+
+	if settings.GlobalParameters[lang].AdvertisingChan == nil {
+		settings.GlobalParameters[lang].AdvertisingChan = &AdvertChannel{
 			Url: "https://google.com",
 		}
 	}
@@ -96,6 +114,38 @@ func SaveAdminSettings() {
 	if err = os.WriteFile(adminPath+jsonFormatName, data, 0600); err != nil {
 		panic(err)
 	}
+}
+
+func (a *Admin) GetCurrency(lang string) string {
+	return a.GlobalParameters[lang].Parameters.Currency
+}
+
+func (a *Admin) GetAdvertText(lang string) string {
+	return a.GlobalParameters[lang].AdvertisingText
+}
+
+func (a *Admin) UpdateAdvertText(lang string, value string) {
+	a.GlobalParameters[lang].AdvertisingText = value
+}
+
+func (a *Admin) GetAdvertUrl(lang string) string {
+	return a.GlobalParameters[lang].AdvertisingChan.Url
+}
+
+func (a *Admin) GetAdvertChannelID(lang string) int64 {
+	return a.GlobalParameters[lang].AdvertisingChan.ChannelID
+}
+
+func (a *Admin) UpdateAdvertChan(lang string, newChan *AdvertChannel) {
+	a.GlobalParameters[lang].AdvertisingChan = newChan
+}
+
+func (a *Admin) UpdateBlockedUsers(lang string, value int) {
+	a.GlobalParameters[lang].BlockedUsers = value
+}
+
+func (a *Admin) GetParams(lang string) *Params {
+	return a.GlobalParameters[lang].Parameters
 }
 
 // ----------------------------------------------------

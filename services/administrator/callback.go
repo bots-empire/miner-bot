@@ -40,8 +40,6 @@ func (h *AdminCallbackHandlers) Init() {
 	h.OnCommand("/change_url_menu", NewChangeUrlMenuCommand())
 	h.OnCommand("/change_text_menu", NewChangeTextMenuCommand())
 	h.OnCommand("/mailing_menu", NewMailingMenuCommand())
-	//h.OnCommand("/change_advert_button_status", NewChangeUnderAdvertButtonCommand())
-	h.OnCommand("/send_advertisement", NewSelectedLangCommand())
 	h.OnCommand("/start_mailing", NewStartMailingCommand())
 
 	//Send Statistic command
@@ -89,12 +87,8 @@ func (c *AdminLoginCommand) Serve(s *model.Situation) error {
 }
 
 func ContainsInAdmin(userID int64) bool {
-	for key := range assets.AdminSettings.AdminID {
-		if key == userID {
-			return true
-		}
-	}
-	return false
+	_, ok := assets.AdminSettings.AdminID[userID]
+	return ok
 }
 
 func notAdmin(botLang string, user *model.User) error {
@@ -252,7 +246,7 @@ func NewChangeUrlMenuCommand() *ChangeUrlMenuCommand {
 
 func (c *ChangeUrlMenuCommand) Serve(s *model.Situation) error {
 	key := "set_new_url_text"
-	value := assets.AdminSettings.AdvertisingChan[s.BotLang].Url
+	value := assets.AdminSettings.GetAdvertUrl(s.BotLang)
 
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin/change_text_url?change_url")
 	if err := promptForInput(s.BotLang, s.User.ID, key, value); err != nil {
@@ -270,7 +264,7 @@ func NewChangeTextMenuCommand() *ChangeTextMenuCommand {
 
 func (c *ChangeTextMenuCommand) Serve(s *model.Situation) error {
 	key := "set_new_advertisement_text"
-	value := assets.AdminSettings.AdvertisingText[s.BotLang]
+	value := assets.AdminSettings.GetAdvertText(s.BotLang)
 
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin/change_text_url?change_text")
 	if err := promptForInput(s.BotLang, s.User.ID, key, value); err != nil {
@@ -288,7 +282,6 @@ func NewMailingMenuCommand() *MailingMenuCommand {
 
 func (c *MailingMenuCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin/mailing")
-	resetSelectedLang()
 	_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "make_a_choice")
 	return sendMailingMenu(s.BotLang, s.User.ID)
 }

@@ -25,7 +25,7 @@ func MakeClick(s *model.Situation) (error, bool) {
 		}
 	}
 
-	if s.User.MiningToday >= assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay {
+	if s.User.MiningToday >= assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay {
 		return reachedMaxAmountPerDay(s), true
 	}
 
@@ -53,13 +53,12 @@ WHERE id = ?;`,
 }
 
 func reachedMaxAmountPerDay(s *model.Situation) error {
-	text := assets.LangText(s.User.Language, "reached_max_amount_per_day")
-	text = fmt.Sprintf(text,
-		assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay,
-		assets.AdminSettings.Parameters[s.BotLang].MaxOfClickPerDay)
+	text := assets.LangText(s.User.Language, "reached_max_amount_per_day",
+		assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay,
+		assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay)
 
 	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.AdvertisingChan[s.User.Language].Url)),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GetAdvertUrl(s.BotLang))),
 	).Build(s.User.Language)
 
 	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
@@ -90,7 +89,7 @@ WHERE id = ?;`,
 }
 
 func getClickAmount(botLang string, minerLevel int8) int {
-	return assets.AdminSettings.Parameters[botLang].ClickAmount[minerLevel-1]
+	return assets.AdminSettings.GetParams(botLang).ClickAmount[minerLevel-1]
 }
 
 func ChangeHashToBTC(s *model.Situation) (error, float64) {
@@ -103,8 +102,8 @@ func ChangeHashToBTC(s *model.Situation) (error, float64) {
 		return nil, 0
 	}
 
-	amountBTC := count / assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
-	clearAmount := amountBTC * assets.AdminSettings.Parameters[s.BotLang].ExchangeHashToBTC
+	amountBTC := count / assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
+	clearAmount := amountBTC * assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
 	amountToChange := oneSatoshi * float64(amountBTC)
 
 	dataBase := model.GetDB(s.BotLang)
@@ -136,7 +135,7 @@ func ChangeBTCToCurrency(s *model.Situation) (error, int) {
 		return nil, 0
 	}
 
-	amountBTC := float64(count) * assets.AdminSettings.Parameters[s.BotLang].ExchangeBTCToCurrency * oneSatoshi
+	amountBTC := float64(count) * assets.AdminSettings.GetParams(s.BotLang).ExchangeBTCToCurrency * oneSatoshi
 	if count <= 0 || amountBTC > s.User.BalanceBTC {
 		return nil, 0
 	}
@@ -167,11 +166,11 @@ func UpgradeMinerLevel(s *model.Situation) (bool, error) {
 		return false, err
 	}
 
-	if int8(len(assets.AdminSettings.Parameters[s.BotLang].UpgradeMinerCost)) == s.User.MinerLevel-1 {
+	if int8(len(assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost)) == s.User.MinerLevel-1 {
 		return false, model.ErrMaxLevelAlreadyCompleted
 	}
 
-	if s.User.BalanceHash < assets.AdminSettings.Parameters[s.BotLang].UpgradeMinerCost[s.User.MinerLevel-1] {
+	if s.User.BalanceHash < assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel-1] {
 		return true, nil
 	}
 
@@ -181,7 +180,7 @@ UPDATE users
 	SET balance_hash = balance_hash - ?, 
 	    miner_level = miner_level + 1
 WHERE id = ?;`,
-		assets.AdminSettings.Parameters[s.BotLang].UpgradeMinerCost[s.User.MinerLevel-1],
+		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel-1],
 		s.User.ID)
 	if err != nil {
 		text := "Failed update miner level: " + err.Error()
@@ -201,7 +200,7 @@ func WithdrawMoneyFromBalance(s *model.Situation, amount string) error {
 		return msgs.SendMsgToUser(s.BotLang, msg)
 	}
 
-	if amountInt < assets.AdminSettings.Parameters[s.BotLang].MinWithdrawalAmount {
+	if amountInt < assets.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount {
 		return minAmountNotReached(s.User, s.BotLang)
 	}
 
@@ -215,7 +214,7 @@ func WithdrawMoneyFromBalance(s *model.Situation, amount string) error {
 
 func minAmountNotReached(u *model.User, botLang string) error {
 	text := assets.LangText(u.Language, "minimum_amount_not_reached")
-	text = fmt.Sprintf(text, assets.AdminSettings.Parameters[botLang].MinWithdrawalAmount)
+	text = fmt.Sprintf(text, assets.AdminSettings.GetParams(botLang).MinWithdrawalAmount)
 
 	return msgs.NewParseMessage(botLang, u.ID, text)
 }
@@ -225,7 +224,7 @@ func sendInvitationToSubs(s *model.Situation, amount string) error {
 
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 	msg.ReplyMarkup = msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.AdvertisingChan[s.User.Language].Url)),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.GetAdvertUrl(s.BotLang))),
 		msgs.NewIlRow(msgs.NewIlDataButton("im_subscribe_button", "/withdrawal_money?"+amount)),
 	).Build(s.User.Language)
 
@@ -271,7 +270,7 @@ func GetABonus(s *model.Situation) error {
 		return msgs.SendSimpleMsg(s.BotLang, s.User.ID, text)
 	}
 
-	s.User.Balance += assets.AdminSettings.Parameters[s.BotLang].BonusAmount
+	s.User.Balance += assets.AdminSettings.GetParams(s.BotLang).BonusAmount
 	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
 UPDATE users 
@@ -294,13 +293,13 @@ func CheckSubscribe(s *model.Situation, source string) bool {
 	model.CheckSubscribe.WithLabelValues(
 		model.GetGlobalBot(s.BotLang).BotLink,
 		s.BotLang,
-		assets.AdminSettings.AdvertisingChan[s.BotLang].Url,
+		assets.AdminSettings.GetAdvertUrl(s.BotLang),
 		source,
 	).Inc()
 
 	member, err := model.Bots[s.BotLang].Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
 		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
-			ChatID: assets.AdminSettings.AdvertisingChan[s.BotLang].ChannelID,
+			ChatID: assets.AdminSettings.GetAdvertChannelID(s.BotLang),
 			UserID: s.User.ID,
 		},
 	})

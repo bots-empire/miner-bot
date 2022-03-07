@@ -136,7 +136,7 @@ func (c *UpgradeMinerLvlCommand) Serve(s *model.Situation) error {
 
 	text := assets.LangText(s.User.Language, "successful_upgrade_miner",
 		s.User.MinerLevel,
-		assets.AdminSettings.Parameters[s.BotLang].UpgradeMinerCost[s.User.MinerLevel-2])
+		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel-2])
 
 	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 }

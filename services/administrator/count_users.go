@@ -66,7 +66,7 @@ func countBlockedUsers(botLang string) int {
 	//	count += value
 	//}
 	//return count
-	return assets.AdminSettings.BlockedUsers[botLang]
+	return assets.AdminSettings.GlobalParameters[botLang].BlockedUsers
 }
 
 func countSubscribers(botLang string) int {

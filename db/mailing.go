@@ -54,7 +54,7 @@ func StartMailing(botLang string, initiator *model.User) {
 
 	sendRespMsgToMailingInitiator(botLang, initiator, "complete_mailing_text", sendToUsers)
 
-	assets.AdminSettings.BlockedUsers[botLang] = blockedUsers
+	assets.AdminSettings.UpdateBlockedUsers(botLang, blockedUsers)
 	assets.SaveAdminSettings()
 }
 
@@ -129,20 +129,16 @@ func sendMailToUser(botLang string, user *model.User, respChan chan<- bool) {
 }
 
 func containsInAdmin(userID int64) bool {
-	for key := range assets.AdminSettings.AdminID {
-		if key == userID {
-			return true
-		}
-	}
-	return false
+	_, ok := assets.AdminSettings.AdminID[userID]
+	return ok
 }
 
 func fillMessageMap() {
 	for _, lang := range assets.AvailableLang {
-		text := assets.AdminSettings.AdvertisingText[lang]
+		text := assets.AdminSettings.GetAdvertText(lang)
 
 		markUp := msgs.NewIlMarkUp(
-			msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.AdvertisingChan[lang].Url)),
+			msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GetAdvertUrl(lang))),
 		).Build(lang)
 
 		message[lang] = tgbotapi.MessageConfig{
@@ -194,7 +190,7 @@ func StartTestMailing1(botLang string, initiator *model.User) {
 
 	fmt.Println("complete mailing; latency:", time.Now().Sub(startTime))
 
-	assets.AdminSettings.BlockedUsers[botLang] = blockedUsers
+	assets.AdminSettings.UpdateBlockedUsers(botLang, blockedUsers)
 	assets.SaveAdminSettings()
 }
 
