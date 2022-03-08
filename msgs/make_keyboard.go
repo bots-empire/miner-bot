@@ -190,7 +190,7 @@ type InlineCustomButton struct {
 	data string
 }
 
-func NewInlineCustomButton(text, data string) InlineCustomButton {
+func NewIlCustomButton(text, data string) InlineCustomButton {
 	return InlineCustomButton{
 		text: text,
 		data: data,

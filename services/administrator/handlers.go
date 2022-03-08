@@ -1,6 +1,7 @@
 package administrator
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -48,7 +49,12 @@ func (c *UpdateParameterCommand) Serve(s *model.Situation) error {
 		return NewMakeMoneySettingCommand().Serve(s)
 	}
 
-	partition := strings.Split(s.Params.Level, "?")[1]
+	partitions := strings.Split(s.Params.Level, "?")
+	if len(partitions) < 2 {
+		return fmt.Errorf("smth went wrong")
+	}
+
+	partition := partitions[1]
 
 	if partition == currencyType {
 		assets.AdminSettings.GetParams(s.BotLang).Currency = s.Message.Text
@@ -84,6 +90,8 @@ func setNewIntParameter(s *model.Situation, partition string) error {
 		assets.AdminSettings.GetParams(s.BotLang).BonusAmount = newAmount
 	case minWithdrawalAmount:
 		assets.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount = newAmount
+	case maxOfClickPDAmount:
+		assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay = newAmount
 	case referralAmount:
 		assets.AdminSettings.GetParams(s.BotLang).ReferralAmount = newAmount
 	}

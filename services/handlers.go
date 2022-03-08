@@ -341,7 +341,7 @@ func buildClickMsg(botLang string, user *model.User) (string, *tgbotapi.InlineKe
 		assets.AdminSettings.GetParams(botLang).MaxOfClickPerDay,
 		int(float32(user.MiningToday)/float32(assets.AdminSettings.GetParams(botLang).MaxOfClickPerDay)*100),
 		"%",
-		assets.AdminSettings.GetParams(botLang).ClickAmount[user.MinerLevel-1],
+		assets.AdminSettings.GetClickAmount(botLang, int(user.MinerLevel-1)),
 		user.MinerLevel,
 		user.BalanceHash)
 
@@ -417,13 +417,13 @@ func NewLvlUpMinerCommand() *LvlUpMinerCommand {
 func (c *LvlUpMinerCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
-	if s.User.MinerLevel-1 == int8(len(getUpgradeMinerCost(s.BotLang))) {
+	if int8(len(getUpgradeMinerCost(s.BotLang))) == s.User.MinerLevel {
 		return reachedMaxMinerLvl(s)
 	}
 
 	text := assets.LangText(s.User.Language, "upgrade_miner_lvl_text",
 		s.User.MinerLevel,
-		getUpgradeMinerCost(s.BotLang)[s.User.MinerLevel-1])
+		getUpgradeMinerCost(s.BotLang)[s.User.MinerLevel])
 
 	markUp := msgs.NewIlMarkUp(
 		msgs.NewIlRow(msgs.NewIlDataButton("upgrade_miner_lvl_button", "/upgrade_miner_lvl")),

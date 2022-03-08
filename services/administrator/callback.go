@@ -34,6 +34,16 @@ func (h *AdminCallbackHandlers) Init() {
 	//Make Money Setting command
 	h.OnCommand("/make_money_setting", NewMakeMoneySettingCommand())
 	h.OnCommand("/make_money", NewChangeParameterCommand())
+	h.OnCommand("/miner_settings", NewMinerSettingCommand())
+	h.OnCommand("/change_click_amount", NewChangeClickAmountButton())
+	h.OnCommand("/change_upgrade_amount", NewChangeUpgradeAmountButton())
+	h.OnCommand("/change_miner_level", NewChangeMinerLvlButton())
+	h.OnCommand("/remove_miner_lvl", NewDeleteMinerLevelButton())
+	h.OnCommand("/add_miner_lvl", NewAddMinerLevelButton())
+	h.OnCommand("/exchange_rate", NewExchangerSettingCommand())
+	h.OnCommand("/change_hash_to_btc_rate", NewChangeHashToBTCRateButton())
+	h.OnCommand("/change_btc_to_currency_rate", NewChangeBTCToCurrencyRateButton())
+	h.OnCommand("/not_clickable", NewNotClickableButton())
 
 	//Mailing command
 	h.OnCommand("/advertisement", NewAdvertisementMenuCommand())

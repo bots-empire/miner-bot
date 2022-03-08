@@ -89,7 +89,7 @@ WHERE id = ?;`,
 }
 
 func getClickAmount(botLang string, minerLevel int8) int {
-	return assets.AdminSettings.GetParams(botLang).ClickAmount[minerLevel-1]
+	return assets.AdminSettings.GetClickAmount(botLang, int(minerLevel-1))
 }
 
 func ChangeHashToBTC(s *model.Situation) (error, float64) {
@@ -166,11 +166,11 @@ func UpgradeMinerLevel(s *model.Situation) (bool, error) {
 		return false, err
 	}
 
-	if int8(len(assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost)) == s.User.MinerLevel-1 {
+	if int8(len(assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost)) == s.User.MinerLevel {
 		return false, model.ErrMaxLevelAlreadyCompleted
 	}
 
-	if s.User.BalanceHash < assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel-1] {
+	if s.User.BalanceHash < assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel] {
 		return true, nil
 	}
 
@@ -180,7 +180,7 @@ UPDATE users
 	SET balance_hash = balance_hash - ?, 
 	    miner_level = miner_level + 1
 WHERE id = ?;`,
-		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel-1],
+		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel],
 		s.User.ID)
 	if err != nil {
 		text := "Failed update miner level: " + err.Error()

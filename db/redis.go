@@ -113,3 +113,25 @@ func DeleteOldAdminMsg(botLang string, userID int64) {
 		RdbSetAdminMsgID(botLang, userID, 0)
 	}
 }
+
+func RdbSetMinerLevelSetting(botLang string, userID int64, level int) {
+	minerLevel := minerLevelSettingToRdb(botLang, userID)
+	_, err := model.Bots[botLang].Rdb.Set(minerLevel, strconv.Itoa(level), 0).Result()
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func minerLevelSettingToRdb(botLang string, userID int64) string {
+	return botLang + ":miner_level_setting:" + strconv.FormatInt(userID, 10)
+}
+
+func RdbGetMinerLevelSetting(botLang string, userID int64) int {
+	minerLevel := minerLevelSettingToRdb(botLang, userID)
+	result, err := model.Bots[botLang].Rdb.Get(minerLevel).Result()
+	if err != nil {
+		log.Println(err)
+	}
+	level, _ := strconv.Atoi(result)
+	return level
+}

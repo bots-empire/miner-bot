@@ -93,6 +93,7 @@ func validateSettings(settings *Admin, lang string) {
 	if settings.GlobalParameters[lang].Parameters == nil {
 		settings.GlobalParameters[lang].Parameters = &Params{
 			ClickAmount:           []int{1},
+			UpgradeMinerCost:      []int{0},
 			ExchangeHashToBTC:     1,
 			ExchangeBTCToCurrency: oneSatoshi,
 		}
@@ -146,6 +147,93 @@ func (a *Admin) UpdateBlockedUsers(lang string, value int) {
 
 func (a *Admin) GetParams(lang string) *Params {
 	return a.GlobalParameters[lang].Parameters
+}
+
+func (a *Admin) GetClickAmount(lang string, level int) int {
+	if level < 0 {
+		level = 0
+	}
+
+	if level > len(a.GlobalParameters[lang].Parameters.ClickAmount)-1 {
+		level = len(a.GlobalParameters[lang].Parameters.ClickAmount) - 1
+	}
+
+	return a.GlobalParameters[lang].Parameters.ClickAmount[level]
+}
+
+func (a *Admin) GetUpgradeCost(lang string, level int) int {
+	if level < 0 {
+		level = 0
+	}
+
+	if level > len(a.GlobalParameters[lang].Parameters.UpgradeMinerCost)-1 {
+		level = len(a.GlobalParameters[lang].Parameters.UpgradeMinerCost) - 1
+	}
+
+	return a.GlobalParameters[lang].Parameters.UpgradeMinerCost[level]
+}
+
+func (a *Admin) GetMaxMinerLevel(lang string) int {
+	clickLen := len(a.GlobalParameters[lang].Parameters.ClickAmount)
+	upgradeLen := len(a.GlobalParameters[lang].Parameters.UpgradeMinerCost)
+
+	return minFromTwo(clickLen, upgradeLen)
+}
+
+func minFromTwo(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+
+func (a *Admin) AddMinerLevel(lang string, level int) {
+	if level == a.GetMaxMinerLevel(lang)-1 {
+		a.GlobalParameters[lang].Parameters.ClickAmount = append(
+			a.GlobalParameters[lang].Parameters.ClickAmount,
+			a.GlobalParameters[lang].Parameters.ClickAmount[level])
+
+		a.GlobalParameters[lang].Parameters.UpgradeMinerCost = append(
+			a.GlobalParameters[lang].Parameters.UpgradeMinerCost,
+			a.GlobalParameters[lang].Parameters.UpgradeMinerCost[level])
+		return
+	}
+
+	if level == 0 {
+		a.GlobalParameters[lang].Parameters.ClickAmount = append(
+			[]int{a.GlobalParameters[lang].Parameters.ClickAmount[0]},
+			a.GlobalParameters[lang].Parameters.ClickAmount...)
+
+		a.GlobalParameters[lang].Parameters.UpgradeMinerCost = append(
+			[]int{a.GlobalParameters[lang].Parameters.UpgradeMinerCost[0]},
+			a.GlobalParameters[lang].Parameters.UpgradeMinerCost...)
+		return
+	}
+
+	copyOfClick := a.GlobalParameters[lang].Parameters.ClickAmount
+	copyOfClick = append(copyOfClick[:level+1], copyOfClick[level:]...)
+	copyOfClick[level] = copyOfClick[level-1]
+	a.GlobalParameters[lang].Parameters.ClickAmount = copyOfClick
+
+	copyOfUpgrade := a.GlobalParameters[lang].Parameters.UpgradeMinerCost
+	copyOfUpgrade = append(copyOfUpgrade[:level+1], copyOfUpgrade[level:]...)
+	copyOfUpgrade[level] = copyOfUpgrade[level-1]
+	a.GlobalParameters[lang].Parameters.UpgradeMinerCost = copyOfUpgrade
+}
+
+func (a *Admin) DeleteMinerLevel(lang string, level int) {
+	a.GlobalParameters[lang].Parameters.ClickAmount = remove(
+		a.GlobalParameters[lang].Parameters.ClickAmount,
+		level)
+
+	a.GlobalParameters[lang].Parameters.UpgradeMinerCost = remove(
+		a.GlobalParameters[lang].Parameters.UpgradeMinerCost,
+		level)
+}
+
+func remove(slice []int, s int) []int {
+	return append(slice[:s], slice[s+1:]...)
 }
 
 // ----------------------------------------------------
