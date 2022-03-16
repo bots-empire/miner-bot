@@ -599,7 +599,7 @@ func (c *SpendMoneyWithdrawalCommand) Serve(s *model.Situation) error {
 		msgs.NewRow(msgs.NewDataButton("withdrawal_method_3"),
 			msgs.NewDataButton("withdrawal_method_4")),
 		msgs.NewRow(msgs.NewDataButton("withdrawal_method_5")),
-		msgs.NewRow(msgs.NewDataButton("main_back")),
+		msgs.NewRow(msgs.NewDataButton("back_to_main_menu_button")),
 	).Build(s.User.Language)
 
 	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
@@ -712,13 +712,15 @@ func (c *MakeStatisticCommand) Serve(s *model.Situation) error {
 	currentTime := time.Now()
 
 	users := currentTime.Unix() % 100000000 / 6000
-	totalEarned := currentTime.Unix() % 100000000 / 500 * 5
-	totalVoice := totalEarned / 7
+	totalClicks := currentTime.Unix() % 100000000 / 500 * 5
+	totalHash := totalClicks * 3
+	totalCurrency := totalHash / 17
 
 	text := assets.LangText(s.User.Language, "statistic_to_user",
 		users,
-		totalEarned,
-		totalVoice)
+		totalClicks,
+		totalHash,
+		totalCurrency)
 
 	return msgs.NewParseMessage(s.BotLang, s.Message.Chat.ID, text)
 }
