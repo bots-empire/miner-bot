@@ -42,6 +42,7 @@ func countAllUsers() int {
 SELECT COUNT(*) FROM users;`)
 		if err != nil {
 			log.Println(err.Error())
+			continue
 		}
 		sum += readRows(rows)
 	}

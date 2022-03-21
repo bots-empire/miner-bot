@@ -216,7 +216,9 @@ func checkMessage(situation *model.Situation, logger log.Logger, sortCentre *uti
 
 		if handler != nil {
 			sortCentre.ServeHandler(handler, situation, func(err error) {
-				logger.Warn("error with serve user msg command: %s", err.Error())
+				text := fmt.Sprintf("error with serve user msg command: %s", err.Error())
+				logger.Warn(text)
+				msgs.SendNotificationToDeveloper(text)
 				smthWentWrong(situation.BotLang, situation.Message.Chat.ID, situation.User.Language)
 			})
 			return
@@ -230,7 +232,9 @@ func checkMessage(situation *model.Situation, logger log.Logger, sortCentre *uti
 
 	if handler != nil {
 		sortCentre.ServeHandler(handler, situation, func(err error) {
-			logger.Warn("error with serve user level command: %s", err.Error())
+			text := fmt.Sprintf("error with serve user level command: %s", err.Error())
+			logger.Warn(text)
+			msgs.SendNotificationToDeveloper(text)
 			smthWentWrong(situation.BotLang, situation.Message.Chat.ID, situation.User.Language)
 		})
 		return

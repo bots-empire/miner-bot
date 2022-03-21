@@ -57,7 +57,7 @@
   "already_max_level": "Уже последний уровень",
   "change_exchange_rate_button": "Настройки обменника \uD83C\uDFDB",
   "exchanger_setting_text": "Настройки курса обменника \uD83C\uDFDB\n\nВы можете изменить данные ⤵",
-  "hash_to_btc_button": "⬇️ Hash за один Satoshi ⬇️",
+  "hash_to_btc_button": "⬇️ Hash за один 0.00000001 BTC ⬇️",
   "btc_to_currency_button": "⬇️ Satoshi за единицу валюты ⬇️",
 
   "back_to_make_money_setting": "← Назад к ⚙️ Заработок",

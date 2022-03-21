@@ -2,7 +2,6 @@ package auth
 
 import (
 	"database/sql"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -209,12 +208,17 @@ func WithdrawMoneyFromBalance(s *model.Situation, amount string) error {
 		return msgs.SendMsgToUser(s.BotLang, msg)
 	}
 
+	if s.User.MinerLevel < 3 {
+		msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "insufficient_miner_level"))
+		return msgs.SendMsgToUser(s.BotLang, msg)
+	}
+
 	return sendInvitationToSubs(s, amount)
 }
 
 func minAmountNotReached(u *model.User, botLang string) error {
-	text := assets.LangText(u.Language, "minimum_amount_not_reached")
-	text = fmt.Sprintf(text, assets.AdminSettings.GetParams(botLang).MinWithdrawalAmount)
+	text := assets.LangText(u.Language, "minimum_amount_not_reached",
+		assets.AdminSettings.GetParams(botLang).MinWithdrawalAmount)
 
 	return msgs.NewParseMessage(botLang, u.ID, text)
 }
