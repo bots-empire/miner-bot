@@ -33,10 +33,9 @@ type GlobalBot struct {
 	AdminMessageHandler  GlobalHandlers
 	AdminCallBackHandler GlobalHandlers
 
-	BotToken      string
-	BotLink       string
-	LanguageInBot []string
-	AssistName    string
+	BotToken      string   `json:"bot_token"`
+	BotLink       string   `json:"bot_link"`
+	LanguageInBot []string `json:"language_in_bot"`
 
 	MaintenanceMode bool
 }
