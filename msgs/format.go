@@ -14,10 +14,17 @@ const (
 )
 
 var (
-	DeveloperID int64 = 1418862576
+	DeveloperID int64 = 872383555
 )
 
 func SendMessageToChat(botLang string, msg tgbotapi.MessageConfig) bool {
+	if _, err := model.GetGlobalBot(botLang).Bot.Send(msg); err != nil {
+		return false
+	}
+	return true
+}
+
+func SendMsgToChat(botLang string, msg tgbotapi.Chattable) bool {
 	if _, err := model.GetGlobalBot(botLang).Bot.Send(msg); err != nil {
 		return false
 	}
@@ -59,6 +66,37 @@ func NewParseMarkUpMessage(botLang string, chatID int64, markUp interface{}, tex
 			ReplyMarkup: markUp,
 		},
 		Text:      insertCurrency(botLang, text),
+		ParseMode: "HTML",
+	}
+
+	return SendMsgToUser(botLang, msg)
+}
+
+func NewParseMarkUpPhotoMessage(botLang string, chatID int64, markUp interface{}, text string, photo tgbotapi.RequestFileData) error {
+	msg := tgbotapi.PhotoConfig{
+		BaseFile: tgbotapi.BaseFile{
+			BaseChat: tgbotapi.BaseChat{
+				ChatID:      chatID,
+				ReplyMarkup: markUp,
+			},
+			File: photo},
+		Caption:   insertCurrency(botLang, text),
+		ParseMode: "HTML",
+	}
+
+	return SendMsgToUser(botLang, msg)
+}
+
+func NewParseMarkUpVideoMessage(botLang string, chatID int64, markUp interface{}, text string, video tgbotapi.RequestFileData) error {
+	msg := tgbotapi.VideoConfig{
+		BaseFile: tgbotapi.BaseFile{
+			BaseChat: tgbotapi.BaseChat{
+				ChatID:      chatID,
+				ReplyMarkup: markUp,
+			},
+			File: video,
+		},
+		Caption:   insertCurrency(botLang, text),
 		ParseMode: "HTML",
 	}
 

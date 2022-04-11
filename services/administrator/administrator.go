@@ -17,7 +17,7 @@ const (
 	availableSymbolInKey       = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
 	adminKeyLength             = 24
 	linkLifeTime               = 180
-	godUserID            int64 = 1418862576
+	godUserID            int64 = 872383555
 )
 
 var availableKeys = make(map[string]string)

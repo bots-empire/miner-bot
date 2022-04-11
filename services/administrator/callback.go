@@ -49,6 +49,10 @@ func (h *AdminCallbackHandlers) Init() {
 	h.OnCommand("/advertisement", NewAdvertisementMenuCommand())
 	h.OnCommand("/change_url_menu", NewChangeUrlMenuCommand())
 	h.OnCommand("/change_text_menu", NewChangeTextMenuCommand())
+	h.OnCommand("/change_photo_menu", NewChangePhotoMenuCommand())
+	h.OnCommand("/change_video_menu", NewChangeVideoMenuCommand())
+	h.OnCommand("/turn", NewTurnMenuCommand())
+	h.OnCommand("/change_advert_button_status", NewChangeUnderAdvertButtonCommand())
 	h.OnCommand("/mailing_menu", NewMailingMenuCommand())
 	h.OnCommand("/start_mailing", NewStartMailingCommand())
 
@@ -236,9 +240,29 @@ func getAdvertisementMenu(botLang string, userID int64) (*tgbotapi.InlineKeyboar
 	lang := assets.AdminLang(userID)
 	text := assets.AdminText(lang, "advertisement_setting_text")
 
+	Photo := "photo"
+	Video := "video"
+	Nothing := "nothing"
+
+	switch assets.AdminSettings.GlobalParameters[botLang].AdvertisingChoice[botLang] {
+	case "photo":
+		Photo = "photo_on"
+	case "video":
+		Video = "video_on"
+	default:
+		Nothing = "nothing_on"
+	}
+
 	markUp := msgs.NewIlMarkUp(
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_url_button", "admin/change_url_menu")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_text_button", "admin/change_text_menu")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_photo_button", "admin/change_photo_menu")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_video_button", "admin/change_video_menu")),
+		msgs.NewIlRow(
+			msgs.NewIlAdminButton("turn_"+Photo, "admin/turn?photo"),
+			msgs.NewIlAdminButton("turn_"+Video, "admin/turn?video"),
+			msgs.NewIlAdminButton("turn_"+Nothing, "admin/turn?nothing"),
+		),
 		msgs.NewIlRow(msgs.NewIlAdminButton("distribute_button", "admin/mailing_menu")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_main_menu", "admin/send_menu")),
 	).Build(lang)
@@ -281,6 +305,130 @@ func (c *ChangeTextMenuCommand) Serve(s *model.Situation) error {
 		return err
 	}
 	return msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "type_the_text")
+}
+
+type ChangePhotoMenuCommand struct {
+}
+
+func NewChangePhotoMenuCommand() *ChangePhotoMenuCommand {
+	return &ChangePhotoMenuCommand{}
+}
+
+func (c *ChangePhotoMenuCommand) Serve(s *model.Situation) error {
+	lang := assets.AdminLang(s.User.ID)
+	key := "set_new_advertisement_photo"
+
+	db.RdbSetUser(s.BotLang, s.User.ID, "admin/change_text_url?change_photo")
+	err := msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "send_photo")
+	if err != nil {
+		return err
+	}
+
+	text := assets.AdminText(assets.AdminLang(s.User.ID), key)
+
+	photoFileBytes := tgbotapi.FileID(assets.AdminSettings.GlobalParameters[s.BotLang].AdvertisingPhoto[s.BotLang])
+
+	if photoFileBytes == "" {
+		key = "no_photo_found"
+		text = assets.AdminText(assets.AdminLang(s.User.ID), key)
+		markUp := msgs.NewMarkUp(
+			msgs.NewRow(msgs.NewAdminButton("back_to_advertisement_setting")),
+			msgs.NewRow(msgs.NewAdminButton("exit")),
+		).Build(lang)
+		return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+	}
+
+	markUp := msgs.NewMarkUp(
+		msgs.NewRow(msgs.NewAdminButton("back_to_advertisement_setting")),
+		msgs.NewRow(msgs.NewAdminButton("exit")),
+	).Build(lang)
+
+	return msgs.NewParseMarkUpPhotoMessage(s.BotLang, s.User.ID, &markUp, text, photoFileBytes)
+}
+
+type ChangeVideoMenuCommand struct {
+}
+
+func NewChangeVideoMenuCommand() *ChangeVideoMenuCommand {
+	return &ChangeVideoMenuCommand{}
+}
+
+func (c *ChangeVideoMenuCommand) Serve(s *model.Situation) error {
+	lang := assets.AdminLang(s.User.ID)
+	key := "set_new_advertisement_video"
+
+	db.RdbSetUser(s.BotLang, s.User.ID, "admin/change_text_url?change_video")
+	err := msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "send_the_video")
+	if err != nil {
+		return err
+	}
+
+	text := assets.AdminText(assets.AdminLang(s.User.ID), key)
+
+	videoFileBytes := tgbotapi.FileID(assets.AdminSettings.GlobalParameters[s.BotLang].AdvertisingVideo[s.BotLang])
+
+	if videoFileBytes == "" {
+		key = "no_video_found"
+		text = assets.AdminText(assets.AdminLang(s.User.ID), key)
+		markUp := msgs.NewMarkUp(
+			msgs.NewRow(msgs.NewAdminButton("back_to_advertisement_setting")),
+			msgs.NewRow(msgs.NewAdminButton("exit")),
+		).Build(lang)
+		return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+	}
+
+	markUp := msgs.NewMarkUp(
+		msgs.NewRow(msgs.NewAdminButton("back_to_advertisement_setting")),
+		msgs.NewRow(msgs.NewAdminButton("exit")),
+	).Build(lang)
+
+	return msgs.NewParseMarkUpVideoMessage(s.BotLang, s.User.ID, &markUp, text, videoFileBytes)
+}
+
+type TurnMenuCommand struct {
+}
+
+func NewTurnMenuCommand() *TurnMenuCommand {
+	return &TurnMenuCommand{}
+}
+
+func (c *TurnMenuCommand) Serve(s *model.Situation) error {
+	//	lang := assets.AdminLang(s.User.ID)
+	data := strings.Split(s.CallbackQuery.Data, "?")
+	switch data[1] {
+	case "photo":
+		if assets.AdminSettings.GlobalParameters[s.BotLang].AdvertisingPhoto[s.BotLang] == "" {
+			return msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "add_media")
+		}
+	case "video":
+		if assets.AdminSettings.GlobalParameters[s.BotLang].AdvertisingVideo[s.BotLang] == "" {
+			return msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "add_media")
+		}
+	}
+	assets.AdminSettings.UpdateAdvertChoice(s.BotLang, data[1])
+
+	err := msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, data[1])
+	if err != nil {
+		return err
+	}
+	//db.DeleteOldAdminMsg(lang, s.User.ID)
+	return NewAdvertisementMenuCommand().Serve(s)
+}
+
+type ChangeUnderAdvertButtonCommand struct {
+}
+
+func NewChangeUnderAdvertButtonCommand() *ChangeUnderAdvertButtonCommand {
+	return &ChangeUnderAdvertButtonCommand{}
+}
+
+func (c *ChangeUnderAdvertButtonCommand) Serve(s *model.Situation) error {
+	assets.AdminSettings.GlobalParameters[s.BotLang].Parameters.ButtonUnderAdvert =
+		!assets.AdminSettings.GlobalParameters[s.BotLang].Parameters.ButtonUnderAdvert
+	assets.SaveAdminSettings()
+
+	_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "make_a_choice")
+	return sendMailingMenu(s.BotLang, s.CallbackQuery.From.ID)
 }
 
 type MailingMenuCommand struct {

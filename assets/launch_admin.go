@@ -25,10 +25,13 @@ type Admin struct {
 }
 
 type GlobalParameters struct {
-	Parameters      *Params        `json:"parameters"`
-	AdvertisingChan *AdvertChannel `json:"advertising_chan"`
-	BlockedUsers    int            `json:"blocked_users"`
-	AdvertisingText string         `json:"advertising_text"`
+	Parameters        *Params        `json:"parameters"`
+	AdvertisingChan   *AdvertChannel `json:"advertising_chan"`
+	BlockedUsers      int            `json:"blocked_users"`
+	AdvertisingText   string         `json:"advertising_text"`
+	AdvertisingPhoto  map[string]string
+	AdvertisingVideo  map[string]string
+	AdvertisingChoice map[string]string
 }
 
 type AdminUser struct {
@@ -44,6 +47,8 @@ type Params struct {
 	UpgradeMinerCost    []int `json:"upgrade_miner_cost"`
 	MaxOfClickPerDay    int   `json:"max_of_click_per_day"`
 	ReferralAmount      int   `json:"referral_amount"`
+
+	ButtonUnderAdvert bool
 
 	ExchangeHashToBTC     int     `json:"exchange_hash_to_btc"`     // 0.00000001 BTC = ExchangeHashToBTC hashes
 	ExchangeBTCToCurrency float64 `json:"exchange_btc_to_currency"` // 0.00000001 * ExchangeBTCToCurrency BTC = 1 USD/EUR
@@ -104,6 +109,15 @@ func validateSettings(settings *Admin, lang string) {
 			Url: "https://google.com",
 		}
 	}
+	if settings.GlobalParameters[lang].AdvertisingPhoto == nil {
+		settings.GlobalParameters[lang].AdvertisingPhoto = make(map[string]string)
+	}
+	if settings.GlobalParameters[lang].AdvertisingVideo == nil {
+		settings.GlobalParameters[lang].AdvertisingVideo = make(map[string]string)
+	}
+	if settings.GlobalParameters[lang].AdvertisingChoice == nil {
+		settings.GlobalParameters[lang].AdvertisingChoice = make(map[string]string)
+	}
 }
 
 func SaveAdminSettings() {
@@ -127,6 +141,18 @@ func (a *Admin) GetAdvertText(lang string) string {
 
 func (a *Admin) UpdateAdvertText(lang string, value string) {
 	a.GlobalParameters[lang].AdvertisingText = value
+}
+
+func (a *Admin) UpdateAdvertPhoto(lang string, value string) {
+	a.GlobalParameters[lang].AdvertisingPhoto[lang] = value
+}
+
+func (a *Admin) UpdateAdvertVideo(lang string, value string) {
+	a.GlobalParameters[lang].AdvertisingVideo[lang] = value
+}
+
+func (a *Admin) UpdateAdvertChoice(lang string, value string) {
+	a.GlobalParameters[lang].AdvertisingChoice[lang] = value
 }
 
 func (a *Admin) GetAdvertUrl(lang string) string {

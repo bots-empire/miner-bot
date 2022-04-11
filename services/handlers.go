@@ -21,7 +21,7 @@ const (
 	updateCounterHeader = "Today Update's counter: %d"
 	updatePrintHeader   = "update number: %d    // miner-bot-update:  %s %s"
 	extraneousUpdate    = "extraneous update"
-	godUserID           = 1418862576
+	godUserID           = 872383555
 
 	oneSatoshi = 0.00000001
 )
@@ -330,12 +330,11 @@ func (c *MakeClickCommand) Serve(s *model.Situation) error {
 
 	text, markUp := buildClickMsg(s.BotLang, s.User)
 
-	msgID, err := msgs.NewIDParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+	_, err := msgs.NewIDParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
 	if err != nil {
 		return err
 	}
 
-	db.SaveUserClickerMsgID(s.BotLang, s.User.ID, msgID)
 	return nil
 }
 

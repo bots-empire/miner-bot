@@ -155,7 +155,7 @@ func getMinerSettingMenu(botLang string, userID int64) *tgbotapi.InlineKeyboardM
 		msgs.NewIlRow(
 			msgs.NewIlCustomButton("-5", "admin/change_click_amount?dec&5"),
 			msgs.NewIlCustomButton("-1", "admin/change_click_amount?dec&1"),
-			msgs.NewIlCustomButton(strconv.Itoa(clickAmount), "admin/not_clickable"),
+			msgs.NewIlCustomButton(strconv.Itoa(clickAmount), "admin/change_click_amount?set_hash"),
 			msgs.NewIlCustomButton("+1", "admin/change_click_amount?inc&1"),
 			msgs.NewIlCustomButton("+5", "admin/change_click_amount?inc&5")),
 
@@ -163,7 +163,7 @@ func getMinerSettingMenu(botLang string, userID int64) *tgbotapi.InlineKeyboardM
 		msgs.NewIlRow(
 			msgs.NewIlCustomButton("-50", "admin/change_upgrade_amount?dec&50"),
 			msgs.NewIlCustomButton("-10", "admin/change_upgrade_amount?dec&10"),
-			msgs.NewIlCustomButton(strconv.Itoa(upgradeCost), "admin/not_clickable"),
+			msgs.NewIlCustomButton(strconv.Itoa(upgradeCost), "admin/change_upgrade_amount?set_price"),
 			msgs.NewIlCustomButton("+10", "admin/change_upgrade_amount?inc&10"),
 			msgs.NewIlCustomButton("+50", "admin/change_upgrade_amount?inc&50")),
 
@@ -195,12 +195,17 @@ func (c *ChangeClickAmountButton) Serve(s *model.Situation) error {
 	allParams := strings.Split(s.CallbackQuery.Data, "?")[1]
 	changeParams := strings.Split(allParams, "&")
 	operation := changeParams[0]
-	value, _ := strconv.Atoi(changeParams[1])
 
 	switch operation {
+
+	case "set_hash":
+		db.RdbSetUser(s.BotLang, s.User.ID, "admin/set_count?hash")
+		return msgs.NewParseMessage(s.BotLang, s.User.ID, assets.AdminText(assets.AdminLang(s.User.ID), "set_hash_value"))
 	case "inc":
+		value, _ := strconv.Atoi(changeParams[1])
 		assets.AdminSettings.GetParams(s.BotLang).ClickAmount[level] += value
 	case "dec":
+		value, _ := strconv.Atoi(changeParams[1])
 		if assets.AdminSettings.GetParams(s.BotLang).ClickAmount[level]-value < 1 {
 			_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "already_min_value")
 			return nil
@@ -225,12 +230,16 @@ func (c *ChangeUpgradeAmountButton) Serve(s *model.Situation) error {
 	allParams := strings.Split(s.CallbackQuery.Data, "?")[1]
 	changeParams := strings.Split(allParams, "&")
 	operation := changeParams[0]
-	value, _ := strconv.Atoi(changeParams[1])
 
 	switch operation {
+	case "set_price":
+		db.RdbSetUser(s.BotLang, s.User.ID, "admin/set_count?price")
+		return msgs.NewParseMessage(s.BotLang, s.User.ID, assets.AdminText(assets.AdminLang(s.User.ID), "set_price_value"))
 	case "inc":
+		value, _ := strconv.Atoi(changeParams[1])
 		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[level] += value
 	case "dec":
+		value, _ := strconv.Atoi(changeParams[1])
 		if assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[level]-value < 1 {
 			_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "already_min_value")
 			return nil

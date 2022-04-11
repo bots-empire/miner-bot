@@ -17,6 +17,8 @@ const (
 
 var (
 	message           = make(map[string]tgbotapi.MessageConfig, 10)
+	photoMessage      = make(map[string]tgbotapi.PhotoConfig, 10)
+	videoMessage      = make(map[string]tgbotapi.VideoConfig, 10)
 	usersPerIteration = 100
 )
 
@@ -111,9 +113,9 @@ func getUsersWithPagination(botLang string, offset int) ([]*model.User, error) {
 			return nil, errors.Wrap(err, "failed scan row")
 		}
 
-		if containsInAdmin(user.ID) {
-			continue
-		}
+		//if containsInAdmin(user.ID) {
+		//	continue
+		//}
 
 		users = append(users, user)
 	}
@@ -122,10 +124,33 @@ func getUsersWithPagination(botLang string, offset int) ([]*model.User, error) {
 }
 
 func sendMailToUser(botLang string, user *model.User, respChan chan<- bool) {
-	msg := message[user.Language]
-	msg.ChatID = user.ID
+	markUp := msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GlobalParameters[user.Language].AdvertisingChan.Url)),
+	).Build(user.Language)
+	button := &markUp
 
-	respChan <- msgs.SendMessageToChat(botLang, msg)
+	if !assets.AdminSettings.GlobalParameters[botLang].Parameters.ButtonUnderAdvert {
+		button = nil
+	}
+	baseChat := tgbotapi.BaseChat{
+		ChatID:      user.ID,
+		ReplyMarkup: button,
+	}
+
+	switch assets.AdminSettings.GlobalParameters[botLang].AdvertisingChoice[botLang] {
+	case "photo":
+		msg := photoMessage[user.Language]
+		msg.BaseChat = baseChat
+		respChan <- msgs.SendMsgToChat(botLang, msg)
+	case "video":
+		msg := videoMessage[user.Language]
+		msg.BaseChat = baseChat
+		respChan <- msgs.SendMsgToChat(botLang, msg)
+	default:
+		msg := message[user.Language]
+		msg.BaseChat = baseChat
+		respChan <- msgs.SendMessageToChat(botLang, msg)
+	}
 }
 
 func containsInAdmin(userID int64) bool {
@@ -134,18 +159,49 @@ func containsInAdmin(userID int64) bool {
 }
 
 func fillMessageMap() {
+	var markUp tgbotapi.InlineKeyboardMarkup
 	for _, lang := range assets.AvailableLang {
 		text := assets.AdminSettings.GetAdvertText(lang)
 
-		markUp := msgs.NewIlMarkUp(
-			msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GetAdvertUrl(lang))),
-		).Build(lang)
+		if assets.AdminSettings.GlobalParameters[lang].Parameters.ButtonUnderAdvert {
+			markUp = tgbotapi.InlineKeyboardMarkup{}
+		} else {
+			markUp = msgs.NewIlMarkUp(
+				msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GlobalParameters[lang].AdvertisingChan.Url)),
+			).Build(lang)
 
-		message[lang] = tgbotapi.MessageConfig{
-			BaseChat: tgbotapi.BaseChat{
-				ReplyMarkup: markUp,
-			},
-			Text: text,
+		}
+
+		switch assets.AdminSettings.GlobalParameters[lang].AdvertisingChoice[lang] {
+		case "photo":
+			photoMessage[lang] = tgbotapi.PhotoConfig{
+				BaseFile: tgbotapi.BaseFile{
+					BaseChat: tgbotapi.BaseChat{
+						ReplyMarkup: markUp,
+					},
+					File: tgbotapi.FileID(assets.AdminSettings.GlobalParameters[lang].AdvertisingPhoto[lang]),
+				},
+				Caption:   text,
+				ParseMode: "HTML",
+			}
+		case "video":
+			videoMessage[lang] = tgbotapi.VideoConfig{
+				BaseFile: tgbotapi.BaseFile{
+					BaseChat: tgbotapi.BaseChat{
+						ReplyMarkup: markUp,
+					},
+					File: tgbotapi.FileID(assets.AdminSettings.GlobalParameters[lang].AdvertisingVideo[lang]),
+				},
+				Caption:   text,
+				ParseMode: "HTML",
+			}
+		default:
+			message[lang] = tgbotapi.MessageConfig{
+				BaseChat: tgbotapi.BaseChat{
+					ReplyMarkup: markUp,
+				},
+				Text: text,
+			}
 		}
 	}
 }

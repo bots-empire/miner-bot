@@ -23,6 +23,7 @@ func (h *AdminMessagesHandlers) GetHandler(command string) model.Handler {
 func (h *AdminMessagesHandlers) Init() {
 	h.OnCommand("/make_money", NewUpdateParameterCommand())
 	h.OnCommand("/change_text_url", NewSetNewTextUrlCommand())
+	h.OnCommand("/set_count", NewChangeMinerCountCommand())
 	h.OnCommand("/advertisement_setting", NewAdvertisementSettingCommand())
 	h.OnCommand("/get_new_source", NewGetNewSourceCommand())
 }
@@ -122,6 +123,18 @@ func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
 		assets.AdminSettings.UpdateAdvertChan(s.BotLang, advertChan)
 	case "change_text":
 		assets.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text)
+	case "change_photo":
+		if len(s.Message.Photo) == 0 {
+			text := assets.AdminText(lang, "send_only_photo")
+			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+		}
+		assets.AdminSettings.UpdateAdvertPhoto(s.BotLang, s.Message.Photo[0].FileID)
+	case "change_video":
+		if s.Message.Video == nil {
+			text := assets.AdminText(lang, "send_only_video")
+			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+		}
+		assets.AdminSettings.UpdateAdvertVideo(s.BotLang, s.Message.Video.FileID)
 	}
 	assets.SaveAdminSettings()
 	status = "operation_completed"
@@ -135,6 +148,38 @@ func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
 	s.Command = "admin/advertisement"
 	s.Params.Level = "admin/change_url"
 	return NewAdvertisementMenuCommand().Serve(s)
+}
+
+type ChangeMinerCountCommand struct {
+}
+
+func NewChangeMinerCountCommand() *ChangeMinerCountCommand {
+	return &ChangeMinerCountCommand{}
+}
+
+func (c *ChangeMinerCountCommand) Serve(s *model.Situation) error {
+	level := db.RdbGetMinerLevelSetting(s.BotLang, s.User.ID)
+	count := strings.Split(s.Params.Level, "?")[1]
+
+	number, _ := strconv.Atoi(s.Message.Text)
+
+	if number < 1 {
+		return msgs.NewParseMessage(s.BotLang, s.User.ID, "need_positive_number")
+	}
+
+	switch count {
+	case "hash":
+		assets.AdminSettings.GetParams(s.BotLang).ClickAmount[level] = number
+	case "price":
+		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[level] = number
+	}
+
+	err := msgs.NewParseMessage(s.BotLang, s.User.ID, assets.AdminText(assets.AdminLang(s.User.ID), "operation_completed"))
+	if err != nil {
+		return err
+	}
+
+	return sendMinerSettingMenu(s)
 }
 
 type AdvertisementSettingCommand struct {

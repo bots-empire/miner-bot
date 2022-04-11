@@ -112,9 +112,13 @@ func (c *HandleClickCommand) Serve(s *model.Situation) error {
 		return nil
 	}
 	text, markUp := buildClickMsg(s.BotLang, s.User)
-	oldMsgID := db.GetUserClickerMsgID(s.BotLang, s.User.ID)
 
-	return msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, oldMsgID, markUp, text)
+	err = msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, s.CallbackQuery.Message.MessageID, markUp, text)
+	if err != nil && err.Error() == "Bad Request: message to edit not found" {
+		return nil
+	}
+
+	return err
 }
 
 type UpgradeMinerLvlCommand struct {
