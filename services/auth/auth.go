@@ -2,6 +2,7 @@ package auth
 
 import (
 	"database/sql"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -76,7 +77,7 @@ func addNewUser(user *model.User, botLang string, referralID int64) error {
 	dataBase := model.GetDB(botLang)
 	rows, err := dataBase.Query(`
 INSERT INTO users
-	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
 		user.ID,
 		user.Balance,
 		user.BalanceHash,
@@ -84,6 +85,7 @@ INSERT INTO users
 		user.MiningToday,
 		user.LastClick,
 		user.MinerLevel,
+		user.AdvertChannel,
 		user.ReferralCount,
 		user.TakeBonus,
 		user.Language,
@@ -147,9 +149,11 @@ func pullReferralID(botLang string, message *tgbotapi.Message) int64 {
 }
 
 func createSimpleUser(botLang string, message *tgbotapi.Message) *model.User {
+	rand.Seed(time.Now().Unix())
 	return &model.User{
-		ID:       message.From.ID,
-		Language: model.GetGlobalBot(botLang).LanguageInBot[0],
+		ID:            message.From.ID,
+		Language:      model.GetGlobalBot(botLang).LanguageInBot[0],
+		AdvertChannel: rand.Intn(3) + 1,
 	}
 }
 
@@ -185,6 +189,7 @@ func ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 			&user.MiningToday,
 			&user.LastClick,
 			&user.MinerLevel,
+			&user.AdvertChannel,
 			&user.ReferralCount,
 			&user.TakeBonus,
 			&user.Language,

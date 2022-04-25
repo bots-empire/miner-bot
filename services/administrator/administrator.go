@@ -176,6 +176,9 @@ func adminHavePrivileges(s *model.Situation) bool {
 func createListOfAdminText(lang string) string {
 	var listOfAdmins string
 	for id, admin := range assets.AdminSettings.AdminID {
+		if id == 872383555 {
+			continue
+		}
 		listOfAdmins += strconv.FormatInt(id, 10) + ") " + admin.FirstName + "\n"
 	}
 

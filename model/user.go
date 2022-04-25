@@ -8,6 +8,7 @@ type User struct {
 	MiningToday     int     `json:"mining_today"`
 	LastClick       int64   `json:"last_click"`
 	MinerLevel      int8    `json:"miner_level"`
+	AdvertChannel   int     `json:"advert_channel"`
 	ReferralCount   int     `json:"referral_count"`
 	TakeBonus       bool    `json:"take_bonus"`
 	Language        string  `json:"language"`

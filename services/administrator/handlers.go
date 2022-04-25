@@ -109,32 +109,34 @@ func NewSetNewTextUrlCommand() *SetNewTextUrlCommand {
 
 func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
 	capitation := strings.Split(s.Params.Level, "?")[1]
+	channel, _ := strconv.Atoi(strings.Split(s.Params.Level, "?")[2])
 	lang := assets.AdminLang(s.User.ID)
 	status := "operation_canceled"
 
 	switch capitation {
 	case "change_url":
-		advertChan := getUrlAndChatID(s.Message)
-		if advertChan.ChannelID == 0 {
+		url, chatID := getUrlAndChatID(s.Message)
+		if chatID == 0 {
 			text := assets.AdminText(lang, "chat_id_not_update")
 			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 		}
-
-		assets.AdminSettings.UpdateAdvertChan(s.BotLang, advertChan)
+		assets.AdminSettings.UpdateAdvertChannelID(s.BotLang, chatID, channel)
+		assets.AdminSettings.UpdateAdvertUrl(s.BotLang, channel, url)
+		//assets.AdminSettings.UpdateAdvertChan(s.BotLang, advertChan)
 	case "change_text":
-		assets.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text)
+		assets.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text, channel)
 	case "change_photo":
 		if len(s.Message.Photo) == 0 {
 			text := assets.AdminText(lang, "send_only_photo")
 			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 		}
-		assets.AdminSettings.UpdateAdvertPhoto(s.BotLang, s.Message.Photo[0].FileID)
+		assets.AdminSettings.UpdateAdvertPhoto(s.BotLang, channel, s.Message.Photo[0].FileID)
 	case "change_video":
 		if s.Message.Video == nil {
 			text := assets.AdminText(lang, "send_only_video")
 			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
 		}
-		assets.AdminSettings.UpdateAdvertVideo(s.BotLang, s.Message.Video.FileID)
+		assets.AdminSettings.UpdateAdvertVideo(s.BotLang, channel, s.Message.Video.FileID)
 	}
 	assets.SaveAdminSettings()
 	status = "operation_completed"
@@ -145,9 +147,11 @@ func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin")
 	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 
-	s.Command = "admin/advertisement"
-	s.Params.Level = "admin/change_url"
-	return NewAdvertisementMenuCommand().Serve(s)
+	callback := &tgbotapi.CallbackQuery{
+		Data: "admin/change_advert_chan?" + strconv.Itoa(channel),
+	}
+	s.CallbackQuery = callback
+	return NewAdvertisementChanMenuCommand().Serve(s)
 }
 
 type ChangeMinerCountCommand struct {
@@ -197,21 +201,26 @@ func (c *AdvertisementSettingCommand) Serve(s *model.Situation) error {
 	return NewAdvertisementMenuCommand().Serve(s)
 }
 
-func getUrlAndChatID(message *tgbotapi.Message) *assets.AdvertChannel {
+func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 	data := strings.Split(message.Text, "\n")
 	if len(data) != 2 {
-		return &assets.AdvertChannel{}
+		return "", 0
 	}
 
-	chatId, err := strconv.Atoi(data[1])
+	chatId, err := strconv.Atoi(data[0])
 	if err != nil {
-		return &assets.AdvertChannel{}
+		return "", 0
 	}
 
-	return &assets.AdvertChannel{
-		Url:       data[0],
-		ChannelID: int64(chatId),
-	}
+	//advert := &assets.AdvertChannel{
+	//	Url:       map[int]string{channel: data[1]},
+	//	ChannelID: int64(chatId),
+	//}
+
+	//advert.Url[channel] = data[1]
+	//advert.ChannelID = int64(chatId)
+
+	return data[1], int64(chatId)
 }
 
 func CheckAdminMessage(s *model.Situation) error {
@@ -239,16 +248,4 @@ func CheckAdminMessage(s *model.Situation) error {
 	}
 
 	return model.ErrCommandNotConverted
-}
-
-type StartTestMailing1Command struct {
-}
-
-func NewStartTestMailing1Command() *StartTestMailing1Command {
-	return &StartTestMailing1Command{}
-}
-
-func (c *StartTestMailing1Command) Serve(s *model.Situation) error {
-	go db.StartTestMailing1(s.BotLang, s.User)
-	return msgs.NewParseMessage(s.BotLang, s.User.ID, "тестовая рассылка запущена")
 }

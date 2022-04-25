@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	getLangIDQuery = "SELECT id, lang FROM users ORDER BY id LIMIT ? OFFSET ?;"
+	getLangIDQuery = "SELECT id, lang, advert_channel FROM users ORDER BY id LIMIT ? OFFSET ?;"
 )
 
 var (
-	message           = make(map[string]tgbotapi.MessageConfig, 10)
-	photoMessage      = make(map[string]tgbotapi.PhotoConfig, 10)
-	videoMessage      = make(map[string]tgbotapi.VideoConfig, 10)
+	message           = map[string]map[int]tgbotapi.MessageConfig{}
+	photoMessage      = map[string]map[int]tgbotapi.PhotoConfig{}
+	videoMessage      = map[string]map[int]tgbotapi.VideoConfig{}
 	usersPerIteration = 100
 )
 
-func StartMailing(botLang string, initiator *model.User) {
+func StartMailing(botLang string, initiator *model.User, channel int) {
 	startTime := time.Now()
 	fillMessageMap()
 
@@ -36,7 +36,7 @@ func StartMailing(botLang string, initiator *model.User) {
 	)
 
 	for offset := 0; ; offset += usersPerIteration {
-		countSend, errCount := mailToUserWithPagination(botLang, offset)
+		countSend, errCount := mailToUserWithPagination(botLang, offset, channel)
 		if countSend == -1 {
 			sendRespMsgToMailingInitiator(botLang, initiator, "failing_mailing_text", sendToUsers)
 			break
@@ -67,7 +67,7 @@ func sendRespMsgToMailingInitiator(botLang string, user *model.User, key string,
 	_ = msgs.NewParseMessage(botLang, user.ID, text)
 }
 
-func mailToUserWithPagination(botLang string, offset int) (int, int) {
+func mailToUserWithPagination(botLang string, offset int, channel int) (int, int) {
 	users, err := getUsersWithPagination(botLang, offset)
 	if err != nil {
 		msgs.SendNotificationToDeveloper(errors.Wrap(err, "get users with pagination").Error())
@@ -83,7 +83,7 @@ func mailToUserWithPagination(botLang string, offset int) (int, int) {
 	var sendToUsers int
 
 	for _, user := range users {
-		go sendMailToUser(botLang, user, responseChan)
+		go sendMailToUser(botLang, user, responseChan, channel)
 	}
 
 	for countOfResp := 0; countOfResp < len(users); countOfResp++ {
@@ -109,7 +109,7 @@ func getUsersWithPagination(botLang string, offset int) ([]*model.User, error) {
 	for rows.Next() {
 		user := &model.User{}
 
-		if err := rows.Scan(&user.ID, &user.Language); err != nil {
+		if err := rows.Scan(&user.ID, &user.Language, &user.AdvertChannel); err != nil {
 			return nil, errors.Wrap(err, "failed scan row")
 		}
 
@@ -123,33 +123,38 @@ func getUsersWithPagination(botLang string, offset int) ([]*model.User, error) {
 	return users, nil
 }
 
-func sendMailToUser(botLang string, user *model.User, respChan chan<- bool) {
+func sendMailToUser(botLang string, user *model.User, respChan chan<- bool, channel int) {
+	if channel == assets.GlobalMailing {
+		channel = user.AdvertChannel
+	}
+
 	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GlobalParameters[user.Language].AdvertisingChan.Url)),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GlobalParameters[user.Language].AdvertisingChan.Url[channel])),
 	).Build(user.Language)
 	button := &markUp
 
 	if !assets.AdminSettings.GlobalParameters[botLang].Parameters.ButtonUnderAdvert {
 		button = nil
 	}
+
 	baseChat := tgbotapi.BaseChat{
 		ChatID:      user.ID,
 		ReplyMarkup: button,
 	}
 
-	switch assets.AdminSettings.GlobalParameters[botLang].AdvertisingChoice[botLang] {
+	switch assets.AdminSettings.GlobalParameters[botLang].AdvertisingChoice[channel] {
 	case "photo":
-		msg := photoMessage[user.Language]
+		msg := photoMessage[botLang][channel]
 		msg.BaseChat = baseChat
 		respChan <- msgs.SendMsgToChat(botLang, msg)
 	case "video":
-		msg := videoMessage[user.Language]
+		msg := videoMessage[botLang][channel]
 		msg.BaseChat = baseChat
 		respChan <- msgs.SendMsgToChat(botLang, msg)
 	default:
-		msg := message[user.Language]
+		msg := message[botLang][channel]
 		msg.BaseChat = baseChat
-		respChan <- msgs.SendMessageToChat(botLang, msg)
+		respChan <- msgs.SendMsgToChat(botLang, msg)
 	}
 }
 
@@ -161,52 +166,69 @@ func containsInAdmin(userID int64) bool {
 func fillMessageMap() {
 	var markUp tgbotapi.InlineKeyboardMarkup
 	for _, lang := range assets.AvailableLang {
-		text := assets.AdminSettings.GetAdvertText(lang)
+		for i := 1; i < 6; i++ {
+			text := assets.AdminSettings.GetAdvertText(lang, i)
 
-		if assets.AdminSettings.GlobalParameters[lang].Parameters.ButtonUnderAdvert {
-			markUp = tgbotapi.InlineKeyboardMarkup{}
-		} else {
-			markUp = msgs.NewIlMarkUp(
-				msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GlobalParameters[lang].AdvertisingChan.Url)),
-			).Build(lang)
+			nilConfig(lang)
 
-		}
+			if assets.AdminSettings.GlobalParameters[lang].Parameters.ButtonUnderAdvert {
+				markUp = tgbotapi.InlineKeyboardMarkup{}
+			} else {
+				markUp = msgs.NewIlMarkUp(
+					msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GlobalParameters[lang].AdvertisingChan.Url[i])),
+				).Build(lang)
+			}
 
-		switch assets.AdminSettings.GlobalParameters[lang].AdvertisingChoice[lang] {
-		case "photo":
-			photoMessage[lang] = tgbotapi.PhotoConfig{
-				BaseFile: tgbotapi.BaseFile{
+			switch assets.AdminSettings.GlobalParameters[lang].AdvertisingChoice[i] {
+			case "photo":
+				photoMessage[lang][i] = tgbotapi.PhotoConfig{
+					BaseFile: tgbotapi.BaseFile{
+						BaseChat: tgbotapi.BaseChat{
+							ReplyMarkup: markUp,
+						},
+						File: tgbotapi.FileID(assets.AdminSettings.GlobalParameters[lang].AdvertisingPhoto[i]),
+					},
+					Caption:   text,
+					ParseMode: "HTML",
+				}
+			case "video":
+				videoMessage[lang][i] = tgbotapi.VideoConfig{
+					BaseFile: tgbotapi.BaseFile{
+						BaseChat: tgbotapi.BaseChat{
+							ReplyMarkup: markUp,
+						},
+						File: tgbotapi.FileID(assets.AdminSettings.GlobalParameters[lang].AdvertisingVideo[i]),
+					},
+					Caption:   text,
+					ParseMode: "HTML",
+				}
+			default:
+				message[lang][i] = tgbotapi.MessageConfig{
 					BaseChat: tgbotapi.BaseChat{
 						ReplyMarkup: markUp,
 					},
-					File: tgbotapi.FileID(assets.AdminSettings.GlobalParameters[lang].AdvertisingPhoto[lang]),
-				},
-				Caption:   text,
-				ParseMode: "HTML",
-			}
-		case "video":
-			videoMessage[lang] = tgbotapi.VideoConfig{
-				BaseFile: tgbotapi.BaseFile{
-					BaseChat: tgbotapi.BaseChat{
-						ReplyMarkup: markUp,
-					},
-					File: tgbotapi.FileID(assets.AdminSettings.GlobalParameters[lang].AdvertisingVideo[lang]),
-				},
-				Caption:   text,
-				ParseMode: "HTML",
-			}
-		default:
-			message[lang] = tgbotapi.MessageConfig{
-				BaseChat: tgbotapi.BaseChat{
-					ReplyMarkup: markUp,
-				},
-				Text: text,
+					Text: text,
+				}
 			}
 		}
 	}
 }
 
-func StartTestMailing1(botLang string, initiator *model.User) {
+func nilConfig(lang string) {
+	if message == nil || photoMessage == nil || videoMessage == nil {
+		message = make(map[string]map[int]tgbotapi.MessageConfig, 10)
+		photoMessage = make(map[string]map[int]tgbotapi.PhotoConfig, 10)
+		videoMessage = make(map[string]map[int]tgbotapi.VideoConfig, 10)
+	}
+
+	if message[lang] == nil || photoMessage[lang] == nil || videoMessage[lang] == nil {
+		message[lang] = make(map[int]tgbotapi.MessageConfig, 10)
+		photoMessage[lang] = make(map[int]tgbotapi.PhotoConfig, 10)
+		videoMessage[lang] = make(map[int]tgbotapi.VideoConfig, 10)
+	}
+}
+
+func StartTestMailing1(botLang string, initiator *model.User, channel int) {
 	startTime := time.Now()
 	fillMessageMap()
 
@@ -222,7 +244,7 @@ func StartTestMailing1(botLang string, initiator *model.User) {
 	for offset := 0; ; offset += usersPerIteration {
 		iterationTime := time.Now()
 
-		countSend, errCount := testMailToUserWithPagination(botLang, offset)
+		countSend, errCount := testMailToUserWithPagination(botLang, offset, channel)
 		if countSend == -1 {
 			sendRespMsgToMailingInitiator(botLang, initiator, "failing_mailing_text", sendToUsers)
 			break
@@ -250,7 +272,7 @@ func StartTestMailing1(botLang string, initiator *model.User) {
 	assets.SaveAdminSettings()
 }
 
-func testMailToUserWithPagination(botLang string, offset int) (int, int) {
+func testMailToUserWithPagination(botLang string, offset int, channel int) (int, int) {
 	users, err := getTestUsersWithPagination(botLang, offset)
 	if err != nil {
 		msgs.SendNotificationToDeveloper(errors.Wrap(err, "get users with pagination").Error())
@@ -266,7 +288,7 @@ func testMailToUserWithPagination(botLang string, offset int) (int, int) {
 	var sendToUsers int
 
 	for _, user := range users {
-		go sendMailToUser(botLang, user, responseChan)
+		go sendMailToUser(botLang, user, responseChan, channel)
 	}
 
 	for countOfResp := 0; countOfResp < len(users); countOfResp++ {

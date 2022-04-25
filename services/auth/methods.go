@@ -57,7 +57,7 @@ func reachedMaxAmountPerDay(s *model.Situation) error {
 		assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay)
 
 	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GetAdvertUrl(s.BotLang))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
 	).Build(s.User.Language)
 
 	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
@@ -228,7 +228,7 @@ func sendInvitationToSubs(s *model.Situation, amount string) error {
 
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 	msg.ReplyMarkup = msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.GetAdvertUrl(s.BotLang))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
 		msgs.NewIlRow(msgs.NewIlDataButton("im_subscribe_button", "/withdrawal_money?"+amount)),
 	).Build(s.User.Language)
 
@@ -297,13 +297,13 @@ func CheckSubscribe(s *model.Situation, source string) bool {
 	model.CheckSubscribe.WithLabelValues(
 		model.GetGlobalBot(s.BotLang).BotLink,
 		s.BotLang,
-		assets.AdminSettings.GetAdvertUrl(s.BotLang),
+		assets.AdminSettings.GetAdvertUrl(s.BotLang, assets.MainAdvert),
 		source,
 	).Inc()
 
 	member, err := model.Bots[s.BotLang].Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
 		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
-			ChatID: assets.AdminSettings.GetAdvertChannelID(s.BotLang),
+			ChatID: assets.AdminSettings.GetAdvertChannelID(s.BotLang, assets.MainAdvert),
 			UserID: s.User.ID,
 		},
 	})

@@ -420,7 +420,7 @@ func NewLvlUpMinerCommand() *LvlUpMinerCommand {
 func (c *LvlUpMinerCommand) Serve(s *model.Situation) error {
 	db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
-	if int8(len(getUpgradeMinerCost(s.BotLang))) == s.User.MinerLevel {
+	if int8(len(getUpgradeMinerCost(s.BotLang))) == s.User.MinerLevel || int8(len(getUpgradeMinerCost(s.BotLang))) < s.User.MinerLevel {
 		return reachedMaxMinerLvl(s)
 	}
 
@@ -764,7 +764,7 @@ func (c *MoreMoneyCommand) Serve(s *model.Situation) error {
 		assets.AdminSettings.GetParams(s.BotLang).BonusAmount)
 
 	markup := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.GetAdvertUrl(s.BotLang))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.GetAdvertUrl(s.BotLang, assets.MainAdvert))),
 		msgs.NewIlRow(msgs.NewIlDataButton("get_bonus_button", "/send_bonus_to_user")),
 	).Build(s.User.Language)
 

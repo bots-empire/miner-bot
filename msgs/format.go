@@ -14,7 +14,8 @@ const (
 )
 
 var (
-	DeveloperID int64 = 872383555
+	// DeveloperIDs 1418862576 stepan
+	DeveloperIDs = []int64{872383555, 1418862576}
 )
 
 func SendMessageToChat(botLang string, msg tgbotapi.MessageConfig) bool {
@@ -170,16 +171,23 @@ func SendMsgToUser(botLang string, msg tgbotapi.Chattable) error {
 	return nil
 }
 
-func SendNotificationToDeveloper(text string) int {
-	id, _ := NewIDParseMessage(defaultNotificationBot, DeveloperID, text)
-	return id
+func SendNotificationToDeveloper(text string) []int {
+	var idArr []int
+	for i := range DeveloperIDs {
+		id, _ := NewIDParseMessage(defaultNotificationBot, DeveloperIDs[i], text)
+		idArr = append(idArr, id)
+	}
+
+	return idArr
 }
 
-func PinMsgToDeveloper(msgID int) {
-	_ = SendMsgToUser(defaultNotificationBot, tgbotapi.PinChatMessageConfig{
-		ChatID:    DeveloperID,
-		MessageID: msgID,
-	})
+func PinMsgToDeveloper(msgID []int) {
+	for i := range DeveloperIDs {
+		_ = SendMsgToUser(defaultNotificationBot, tgbotapi.PinChatMessageConfig{
+			ChatID:    DeveloperIDs[i],
+			MessageID: msgID[i],
+		})
+	}
 }
 
 func insertCurrency(botLang string, text string) string {

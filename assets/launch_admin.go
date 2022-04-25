@@ -16,7 +16,9 @@ const (
 	adminPath      = "assets/admin"
 	jsonFormatName = ".json"
 
-	oneSatoshi = 0.00000001
+	oneSatoshi    = 0.00000001
+	GlobalMailing = 4
+	MainAdvert    = 5
 )
 
 type Admin struct {
@@ -28,10 +30,10 @@ type GlobalParameters struct {
 	Parameters        *Params        `json:"parameters"`
 	AdvertisingChan   *AdvertChannel `json:"advertising_chan"`
 	BlockedUsers      int            `json:"blocked_users"`
-	AdvertisingText   string         `json:"advertising_text"`
-	AdvertisingPhoto  map[string]string
-	AdvertisingVideo  map[string]string
-	AdvertisingChoice map[string]string
+	AdvertisingText   map[int]string `json:"advertising_text"`
+	AdvertisingPhoto  map[int]string
+	AdvertisingVideo  map[int]string
+	AdvertisingChoice map[int]string
 }
 
 type AdminUser struct {
@@ -57,8 +59,8 @@ type Params struct {
 }
 
 type AdvertChannel struct {
-	Url       string `json:"url"`
-	ChannelID int64  `json:"channel_id"`
+	Url       map[int]string `json:"url"`
+	ChannelID map[int]int64  `json:"channel_id"`
 }
 
 var AdminSettings *Admin
@@ -106,17 +108,32 @@ func validateSettings(settings *Admin, lang string) {
 
 	if settings.GlobalParameters[lang].AdvertisingChan == nil {
 		settings.GlobalParameters[lang].AdvertisingChan = &AdvertChannel{
-			Url: "https://google.com",
+			Url: map[int]string{
+				0: "https://google.com",
+				1: "https://google.com",
+				2: "https://google.com",
+				5: "https://google.com"},
+			ChannelID: make(map[int]int64),
 		}
 	}
+
+	if settings.GlobalParameters[lang].AdvertisingChoice == nil {
+		settings.GlobalParameters[lang].AdvertisingChoice = make(map[int]string)
+	}
+
+	if settings.GlobalParameters[lang].AdvertisingText == nil {
+		settings.GlobalParameters[lang].AdvertisingText = make(map[int]string)
+	}
+
+	if settings.GlobalParameters[lang].AdvertisingChan == nil {
+		settings.GlobalParameters[lang].AdvertisingChan = &AdvertChannel{}
+	}
+
 	if settings.GlobalParameters[lang].AdvertisingPhoto == nil {
-		settings.GlobalParameters[lang].AdvertisingPhoto = make(map[string]string)
+		settings.GlobalParameters[lang].AdvertisingPhoto = make(map[int]string)
 	}
 	if settings.GlobalParameters[lang].AdvertisingVideo == nil {
-		settings.GlobalParameters[lang].AdvertisingVideo = make(map[string]string)
-	}
-	if settings.GlobalParameters[lang].AdvertisingChoice == nil {
-		settings.GlobalParameters[lang].AdvertisingChoice = make(map[string]string)
+		settings.GlobalParameters[lang].AdvertisingVideo = make(map[int]string)
 	}
 }
 
@@ -135,32 +152,40 @@ func (a *Admin) GetCurrency(lang string) string {
 	return a.GlobalParameters[lang].Parameters.Currency
 }
 
-func (a *Admin) GetAdvertText(lang string) string {
-	return a.GlobalParameters[lang].AdvertisingText
+func (a *Admin) GetAdvertText(lang string, channel int) string {
+	return a.GlobalParameters[lang].AdvertisingText[channel]
 }
 
-func (a *Admin) UpdateAdvertText(lang string, value string) {
-	a.GlobalParameters[lang].AdvertisingText = value
+func (a *Admin) UpdateAdvertUrl(lang string, channel int, value string) {
+	a.GlobalParameters[lang].AdvertisingChan.Url[channel] = value
 }
 
-func (a *Admin) UpdateAdvertPhoto(lang string, value string) {
-	a.GlobalParameters[lang].AdvertisingPhoto[lang] = value
+func (a *Admin) UpdateAdvertChannelID(lang string, value int64, channel int) {
+	a.GlobalParameters[lang].AdvertisingChan.ChannelID[channel] = value
 }
 
-func (a *Admin) UpdateAdvertVideo(lang string, value string) {
-	a.GlobalParameters[lang].AdvertisingVideo[lang] = value
+func (a *Admin) UpdateAdvertText(lang string, value string, channel int) {
+	a.GlobalParameters[lang].AdvertisingText[channel] = value
 }
 
-func (a *Admin) UpdateAdvertChoice(lang string, value string) {
-	a.GlobalParameters[lang].AdvertisingChoice[lang] = value
+func (a *Admin) UpdateAdvertPhoto(lang string, channel int, value string) {
+	a.GlobalParameters[lang].AdvertisingPhoto[channel] = value
 }
 
-func (a *Admin) GetAdvertUrl(lang string) string {
-	return a.GlobalParameters[lang].AdvertisingChan.Url
+func (a *Admin) UpdateAdvertVideo(lang string, channel int, value string) {
+	a.GlobalParameters[lang].AdvertisingVideo[channel] = value
 }
 
-func (a *Admin) GetAdvertChannelID(lang string) int64 {
-	return a.GlobalParameters[lang].AdvertisingChan.ChannelID
+func (a *Admin) UpdateAdvertChoice(lang string, channel int, value string) {
+	a.GlobalParameters[lang].AdvertisingChoice[channel] = value
+}
+
+func (a *Admin) GetAdvertUrl(lang string, channel int) string {
+	return a.GlobalParameters[lang].AdvertisingChan.Url[channel]
+}
+
+func (a *Admin) GetAdvertChannelID(lang string, channel int) int64 {
+	return a.GlobalParameters[lang].AdvertisingChan.ChannelID[channel]
 }
 
 func (a *Admin) UpdateAdvertChan(lang string, newChan *AdvertChannel) {

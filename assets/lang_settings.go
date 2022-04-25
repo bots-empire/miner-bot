@@ -19,7 +19,7 @@ const (
 
 var (
 	AvailableAdminLang = []string{"en", "ru"}
-	AvailableLang      = []string{"it", "en", "es", "pt"}
+	AvailableLang      = []string{"it", "en", "es", "pt", "de", "mx", "tr"}
 
 	Commands     = make(map[string]string)
 	Language     = make([]map[string]string, len(AvailableLang))
