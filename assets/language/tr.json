@@ -46,7 +46,7 @@
   "referral_text": "\uD83D\uDC65 Arkadaş için para\n\uD83D\uDCB3 Davet edilen arkadaşlar için ikramiye alın \uD83D\uDC47\n\uD83D\uDD17 Bağlantıyı bir arkadaşına gönder - %s \n\n✅ %d {{currency}} davet edilen her arkadaşınız için alırsınız.\n\n\n\uD83D\uDC65 Davet ettin: %d (kişi sayısı)",
   "more_money_text": "❗KANALA ABONE OLMAK İÇİN %d {{currency}} İSTİYOR MUSUNUZ?!❗️\n\n\uD83D\uDC49 Sponsorun kanalına abone olun ve 20 gönderiyi görüntüleyin, ardından buraya geri gelin ve «ödül al» düğmesini tıklayın %d {{currency}}\n\n‼️ Dikkat: Sponsorun kanalına aboneliğinizi iptal ederseniz ödeme yapılmayacaktır.",
   "bonus_already_have": "Ya has recibido el bono",
-  "bonus_have_received": "Has recibido un bono",
+  "bonus_have_received": "Bonusu aldın",
   "user_level_not_defined": "Purtroppo vi siete persi, si prega di e-mail /start e tutto andrà bene",
   "lang_button": "Español \uD83C\uDDEA\uD83C\uDDF8",
   "make_a_choice": "Hacer una elección",

@@ -45,8 +45,8 @@
   "successfully_withdrawn": "✅ Empezaste a retirar fondos . Los retiros pueden tardar hasta 3 días hábiles. Hasta este momento, no puede darse de baja de los canales de nuestros socios, de lo contrario, no recibirá fondos",
   "referral_text": "\uD83D\uDC65 Freunde einladen\n\uD83D\uDCB3 Kriegen Sie einen Bonus für jeden eingeladenen Freund \uD83D\uDC47\n\uD83D\uDD17 Schicken Sie dem Freund diesen Link - %s \n\n✅ %d {{currency}} für jeden eingeladenen Freund..\n\n\n\uD83D\uDC65 Sie haben eingeladen: %d (Anzahl der Personen)",
   "more_money_text": "❗️WOLLEN SIE %d {{currency}} MIT EINEM ABO VERDIENEN?!❗️\n\n\uD83D\uDC49  Abonnieren Sie den Kanal des Sponsors und schauen Sie sich 20 Posts an, danach können Sie auf den Knopf „Belohnung kriegen“ drücken um das Geld zu erhalten %d {{currency}}\n\n‼️ Achtung: wenn Sie den Kanal deabonnieren wird das Geld nicht ausgezahlt",
-  "bonus_already_have": "Ya has recibido el bono",
-  "bonus_have_received": "Sie haben bereits einen Bonus erhalten",
+  "bonus_already_have": "Sie haben bereits einen Bonus erhalten",
+  "bonus_have_received": "Sie haben den Bonus erfolgreich erhalten",
   "user_level_not_defined": "Purtroppo vi siete persi, si prega di e-mail /start e tutto andrà bene",
   "lang_button": "Español \uD83C\uDDEA\uD83C\uDDF8",
   "make_a_choice": "Hacer una elección",
@@ -55,7 +55,7 @@
   "withdrawal_not_subs_text": "Suscríbete al canal patrocinado y ver los primeros 15 mensajes para retirar su dinero!",
   "im_subscribe_button": "✅ Confirmar retiro de dinero",
   "invitation_to_subscribe": "We checked your subscription",
-  "user_dont_subscribe": "no estás suscrito al canal",
+  "user_dont_subscribe": "Sie haben den Kanal nicht abonniert",
   "invalid_link_err": "Error, link is invalid",
   "select_lang_menu": "Seleccione por favor una lengua"
 }

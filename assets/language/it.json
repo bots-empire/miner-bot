@@ -45,8 +45,8 @@
   "successfully_withdrawn": "✅ Empezaste a retirar fondos . Los retiros pueden tardar hasta 3 días hábiles. Hasta este momento, no puede darse de baja de los canales de nuestros socios, de lo contrario, no recibirá fondos",
   "referral_text": "\uD83D\uDC65 Soldi per amico\n\uD83D\uDCB3 Ottenete il bonus per gli amici invitati \uD83D\uDC47\n\uD83D\uDD17 Inviate il link ad un amico - %s \n\n✅ %d {{currency}} ricevete per ogni amico invitato.\n\n\n\uD83D\uDC65 Avete invitato: %d (numero di persone)",
   "more_money_text": "❗VUOI %d {{currency}} PER UN ABBONAMENTO AL CANALE?!❗️\n\n\uD83D\uDC49 Iscriviti al canale e guardare le nuove voci, quindi fare clic sul pulsante «Ottieni fondi». Si ottiene %d {{currency}}\n\n‼️ Attenzione: se si annulla l'abbonamento al canale sponsor, il pagamento non sarà effettuato",
-  "bonus_already_have": "Ya has recibido el bono",
-  "bonus_have_received": "Has recibido un bono",
+  "bonus_already_have": "⚠️Hai già ricevuto un bonus⚠️",
+  "bonus_have_received": "Hai ricevuto un bonus✅",
   "user_level_not_defined": "Purtroppo vi siete persi, si prega di e-mail /start e tutto andrà bene",
   "lang_button": "Español \uD83C\uDDEA\uD83C\uDDF8",
   "make_a_choice": "Hacer una elección",
@@ -55,7 +55,7 @@
   "withdrawal_not_subs_text": "Iscriviti al canale sponsorizzato e visualizza i primi 15 post per prelevare i tuoi soldi!",
   "im_subscribe_button": "✅ Conferma prelievo",
   "invitation_to_subscribe": "We checked your subscription",
-  "user_dont_subscribe": "no estás suscrito al canal",
+  "user_dont_subscribe": "❌Non sei iscritto al canale❌",
   "invalid_link_err": "Error, link is invalid",
   "select_lang_menu": "Seleccione por favor una lengua"
 }
