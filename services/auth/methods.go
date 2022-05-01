@@ -77,8 +77,6 @@ WHERE id = ?;`,
 		s.User.LastClick,
 		s.User.ID)
 	if err != nil {
-		text := "Failed increase balance after click: " + err.Error()
-		a.msgs.SendNotificationToDeveloper(text, false)
 		return err
 	}
 
@@ -112,8 +110,6 @@ WHERE id = ?;`,
 		amountToChange,
 		s.User.ID)
 	if err != nil {
-		text := "Failed exchange hash to btc: " + err.Error()
-		a.msgs.SendNotificationToDeveloper(text, false)
 		return err, 0
 	}
 
@@ -146,8 +142,6 @@ WHERE id = ?;`,
 		count,
 		s.User.ID)
 	if err != nil {
-		text := "Failed exchange btc to currency: " + err.Error()
-		a.msgs.SendNotificationToDeveloper(text, false)
 		return err, 0
 	}
 
@@ -179,8 +173,6 @@ WHERE id = ?;`,
 		model.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel],
 		s.User.ID)
 	if err != nil {
-		text := "Failed update miner level: " + err.Error()
-		a.msgs.SendNotificationToDeveloper(text, false)
 		return false, err
 	}
 	s.User.MinerLevel++
