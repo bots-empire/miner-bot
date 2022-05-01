@@ -1,4 +1,4 @@
-package assets
+package model
 
 import (
 	"encoding/json"
@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/Stepan1328/miner-bot/model"
 )
 
 const (
@@ -77,7 +75,7 @@ func UploadAdminSettings() {
 		fmt.Println(err)
 	}
 
-	for lang, globalBot := range model.Bots {
+	for lang, globalBot := range Bots {
 		validateSettings(settings, lang)
 		for _, lang = range globalBot.LanguageInBot {
 			validateSettings(settings, lang)
@@ -304,7 +302,7 @@ var UpdateStatistic *UpdateInfo
 func UploadUpdateStatistic() {
 	info := &UpdateInfo{}
 	info.Mu = new(sync.Mutex)
-	strStatistic, err := model.Bots["it"].Rdb.Get("update_statistic").Result()
+	strStatistic, err := Bots["it"].Rdb.Get("update_statistic").Result()
 	if err != nil {
 		UpdateStatistic = info
 		return
@@ -322,7 +320,7 @@ func UploadUpdateStatistic() {
 
 func SaveUpdateStatistic() {
 	strStatistic := strconv.Itoa(UpdateStatistic.Counter) + "?" + strconv.Itoa(UpdateStatistic.Day)
-	_, err := model.Bots["it"].Rdb.Set("update_statistic", strStatistic, 0).Result()
+	_, err := Bots["it"].Rdb.Set("update_statistic", strStatistic, 0).Result()
 	if err != nil {
 		log.Println(err)
 	}

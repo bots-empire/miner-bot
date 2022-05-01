@@ -6,16 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/model"
-	"github.com/Stepan1328/miner-bot/msgs"
 	"github.com/Stepan1328/miner-bot/services/administrator"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 )
 
-func CheckingTheUser(botLang string, message *tgbotapi.Message) (*model.User, error) {
-	dataBase := model.GetDB(botLang)
+func (a *Auth) CheckingTheUser(message *tgbotapi.Message) (*model.User, error) {
+	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 SELECT * FROM users 
 	WHERE id = ?;`,
@@ -24,25 +22,25 @@ SELECT * FROM users
 		return nil, errors.Wrap(err, "get user")
 	}
 
-	users, err := ReadUsers(rows)
+	users, err := a.ReadUsers(rows)
 	if err != nil {
 		return nil, errors.Wrap(err, "read user")
 	}
 
 	switch len(users) {
 	case 0:
-		user := createSimpleUser(botLang, message)
-		if len(model.GetGlobalBot(botLang).LanguageInBot) > 1 && !administrator.ContainsInAdmin(message.From.ID) {
+		user := createSimpleUser(a.bot.LanguageInBot[0], message)
+		if len(a.bot.LanguageInBot) > 1 && !administrator.ContainsInAdmin(message.From.ID) {
 			user.Language = "not_defined" // TODO: refactor
 		}
-		referralID := pullReferralID(botLang, message)
-		if err := addNewUser(user, botLang, referralID); err != nil {
+		referralID := a.pullReferralID(message)
+		if err := a.addNewUser(user, a.bot.LanguageInBot[0], referralID); err != nil {
 			return nil, errors.Wrap(err, "add new user")
 		}
 
 		model.TotalIncome.WithLabelValues(
-			model.GetGlobalBot(botLang).BotLink,
-			botLang,
+			a.bot.BotLink,
+			a.bot.BotLang,
 		).Inc()
 
 		if user.Language == "not_defined" {
@@ -59,9 +57,9 @@ SELECT * FROM users
 	}
 }
 
-func SetStartLanguage(botLang string, callback *tgbotapi.CallbackQuery) error {
+func (a *Auth) SetStartLanguage(callback *tgbotapi.CallbackQuery) error {
 	data := strings.Split(callback.Data, "?")[1]
-	dataBase := model.GetDB(botLang)
+	dataBase := a.bot.GetDataBase()
 	_, err := dataBase.Exec("UPDATE users SET lang = ? WHERE id = ?", data, callback.From.ID)
 	if err != nil {
 		return err
@@ -69,12 +67,12 @@ func SetStartLanguage(botLang string, callback *tgbotapi.CallbackQuery) error {
 	return nil
 }
 
-func addNewUser(user *model.User, botLang string, referralID int64) error {
+func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) error {
 	user.MinerLevel = 1
 	user.RegisterTime = time.Now().Unix()
 	user.Language = botLang
 
-	dataBase := model.GetDB(botLang)
+	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 INSERT INTO users
 	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
@@ -101,16 +99,16 @@ INSERT INTO users
 		return nil
 	}
 
-	baseUser, err := GetUser(botLang, referralID)
+	baseUser, err := a.GetUser(referralID)
 	if err != nil {
 		return errors.Wrap(err, "get user")
 	}
-	baseUser.Balance += assets.AdminSettings.GetParams(botLang).ReferralAmount
+	baseUser.Balance += model.AdminSettings.GetParams(botLang).ReferralAmount
 	rows, err = dataBase.Query("UPDATE users SET balance = ?, referral_count = ? WHERE id = ?;",
 		baseUser.Balance, baseUser.ReferralCount+1, baseUser.ID)
 	if err != nil {
 		text := "Fatal Err with DB - auth.85 //" + err.Error()
-		msgs.SendNotificationToDeveloper(text)
+		a.msgs.SendNotificationToDeveloper(text, false)
 		return err
 	}
 	_ = rows.Close()
@@ -118,21 +116,21 @@ INSERT INTO users
 	return nil
 }
 
-func pullReferralID(botLang string, message *tgbotapi.Message) int64 {
+func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
 	readParams := strings.Split(message.Text, " ")
 	if len(readParams) < 2 {
 		return 0
 	}
 
-	linkInfo, err := model.DecodeLink(botLang, readParams[1])
+	linkInfo, err := model.DecodeLink(a.bot.GetDataBase(), readParams[1])
 	if err != nil || linkInfo == nil {
 		if err != nil {
-			msgs.SendNotificationToDeveloper("some err in decode link: " + err.Error())
+			a.msgs.SendNotificationToDeveloper("some err in decode link: "+err.Error(), false)
 		}
 
 		model.IncomeBySource.WithLabelValues(
-			model.GetGlobalBot(botLang).BotLink,
-			botLang,
+			a.bot.BotLink,
+			a.bot.BotLang,
 			"unknown",
 		).Inc()
 
@@ -140,25 +138,24 @@ func pullReferralID(botLang string, message *tgbotapi.Message) int64 {
 	}
 
 	model.IncomeBySource.WithLabelValues(
-		model.GetGlobalBot(botLang).BotLink,
-		botLang,
+		a.bot.BotLink,
+		a.bot.BotLang,
 		linkInfo.Source,
 	).Inc()
 
 	return linkInfo.ReferralID
 }
 
-func createSimpleUser(botLang string, message *tgbotapi.Message) *model.User {
-	rand.Seed(time.Now().Unix())
+func createSimpleUser(lang string, message *tgbotapi.Message) *model.User {
 	return &model.User{
 		ID:            message.From.ID,
-		Language:      model.GetGlobalBot(botLang).LanguageInBot[0],
+		Language:      lang,
 		AdvertChannel: rand.Intn(3) + 1,
 	}
 }
 
-func GetUser(botLang string, id int64) (*model.User, error) {
-	dataBase := model.GetDB(botLang)
+func (a *Auth) GetUser(id int64) (*model.User, error) {
+	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 SELECT * FROM users
 	WHERE id = ?;`,
@@ -167,14 +164,14 @@ SELECT * FROM users
 		return nil, err
 	}
 
-	users, err := ReadUsers(rows)
+	users, err := a.ReadUsers(rows)
 	if err != nil || len(users) == 0 {
 		return nil, model.ErrUserNotFound
 	}
 	return users[0], nil
 }
 
-func ReadUsers(rows *sql.Rows) ([]*model.User, error) {
+func (a *Auth) ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 	defer rows.Close()
 
 	var users []*model.User
@@ -196,7 +193,7 @@ func ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 			&user.RegisterTime,
 			&user.MinWithdrawal,
 			&user.FirstWithdrawal); err != nil {
-			msgs.SendNotificationToDeveloper(errors.Wrap(err, "failed to scan row").Error())
+			a.msgs.SendNotificationToDeveloper(errors.Wrap(err, "failed to scan row").Error(), false)
 		}
 
 		users = append(users, user)

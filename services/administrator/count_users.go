@@ -5,37 +5,39 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/model"
-	"github.com/Stepan1328/miner-bot/msgs"
 	"github.com/pkg/errors"
 )
 
-func countUsers(botLang string) int {
-	dataBase := model.GetDB(botLang)
-	rows, err := dataBase.Query(`
+func (a *Admin) countUsers() int {
+	rows, err := a.bot.GetDataBase().Query(`
 SELECT COUNT(*) FROM users;`)
 	if err != nil {
 		log.Println(err.Error())
 	}
-	return readRows(rows)
+	count, err := readRows(rows)
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper(err.Error(), false)
+	}
+
+	return count
 }
 
-func readRows(rows *sql.Rows) int {
+func readRows(rows *sql.Rows) (int, error) {
 	defer rows.Close()
 
 	var count int
 
 	for rows.Next() {
 		if err := rows.Scan(&count); err != nil {
-			msgs.SendNotificationToDeveloper(errors.Wrap(err, "failed to scan row").Error())
+			return 0, errors.Wrap(err, "failed to scan row")
 		}
 	}
 
-	return count
+	return count, nil
 }
 
-func countAllUsers() int {
+func (a *Admin) countAllUsers() int {
 	var sum int
 	for _, handler := range model.Bots {
 		rows, err := handler.DataBase.Query(`
@@ -44,19 +46,28 @@ SELECT COUNT(*) FROM users;`)
 			log.Println(err.Error())
 			continue
 		}
-		sum += readRows(rows)
+		count, err := readRows(rows)
+		if err != nil {
+			a.msgs.SendNotificationToDeveloper(err.Error(), false)
+		}
+
+		sum += count
 	}
 	return sum
 }
 
-func countReferrals(botLang string, amountUsers int) string {
+func (a *Admin) countReferrals(botLang string, amountUsers int) string {
 	var refText string
 	rows, err := model.Bots[botLang].DataBase.Query("SELECT SUM(referral_count) FROM users;")
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	count := readRows(rows)
+	count, err := readRows(rows)
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper(err.Error(), false)
+	}
+
 	refText = strconv.Itoa(count) + " (" + strconv.Itoa(int(float32(count)*100.0/float32(amountUsers))) + "%)"
 	return refText
 }
@@ -67,15 +78,20 @@ func countBlockedUsers(botLang string) int {
 	//	count += value
 	//}
 	//return count
-	return assets.AdminSettings.GlobalParameters[botLang].BlockedUsers
+	return model.AdminSettings.GlobalParameters[botLang].BlockedUsers
 }
 
-func countSubscribers(botLang string) int {
+func (a *Admin) countSubscribers(botLang string) int {
 	rows, err := model.Bots[botLang].DataBase.Query(`
 SELECT COUNT(DISTINCT id) FROM subs;`)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	return readRows(rows)
+	count, err := readRows(rows)
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper(err.Error(), false)
+	}
+
+	return count
 }

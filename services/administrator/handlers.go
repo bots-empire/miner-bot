@@ -5,10 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/db"
 	"github.com/Stepan1328/miner-bot/model"
-	"github.com/Stepan1328/miner-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -20,34 +18,27 @@ func (h *AdminMessagesHandlers) GetHandler(command string) model.Handler {
 	return h.Handlers[command]
 }
 
-func (h *AdminMessagesHandlers) Init() {
-	h.OnCommand("/make_money", NewUpdateParameterCommand())
-	h.OnCommand("/change_text_url", NewSetNewTextUrlCommand())
-	h.OnCommand("/set_count", NewChangeMinerCountCommand())
-	h.OnCommand("/advertisement_setting", NewAdvertisementSettingCommand())
-	h.OnCommand("/get_new_source", NewGetNewSourceCommand())
+func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
+	h.OnCommand("/make_money", adminSrv.UpdateParameterCommand)
+	h.OnCommand("/change_text_url", adminSrv.SetNewTextUrlCommand)
+	h.OnCommand("/set_count", adminSrv.ChangeMinerCountCommand)
+	h.OnCommand("/advertisement_setting", adminSrv.AdvertisementSettingCommand)
+	h.OnCommand("/get_new_source", adminSrv.GetNewSourceCommand)
 }
 
 func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-type UpdateParameterCommand struct {
-}
-
-func NewUpdateParameterCommand() *UpdateParameterCommand {
-	return &UpdateParameterCommand{}
-}
-
-func (c *UpdateParameterCommand) Serve(s *model.Situation) error {
+func (a *Admin) UpdateParameterCommand(s *model.Situation) error {
 	if strings.Contains(s.Params.Level, "make_money?") && s.Message.Text == "← Назад к ⚙️ Заработок" {
-		if err := setAdminBackButton(s.BotLang, s.User.ID, "operation_canceled"); err != nil {
+		if err := a.setAdminBackButton(s.User.ID, "operation_canceled"); err != nil {
 			return err
 		}
 		db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 		s.Command = "admin/make_money_setting"
 
-		return NewMakeMoneySettingCommand().Serve(s)
+		return a.MakeMoneySettingCommand(s)
 	}
 
 	partitions := strings.Split(s.Params.Level, "?")
@@ -58,90 +49,83 @@ func (c *UpdateParameterCommand) Serve(s *model.Situation) error {
 	partition := partitions[1]
 
 	if partition == currencyType {
-		assets.AdminSettings.GetParams(s.BotLang).Currency = s.Message.Text
+		model.AdminSettings.GetParams(s.BotLang).Currency = s.Message.Text
 	} else {
-		err := setNewIntParameter(s, partition)
+		err := a.setNewIntParameter(s, partition)
 		if err != nil {
 			return err
 		}
 	}
 
-	assets.SaveAdminSettings()
-	err := setAdminBackButton(s.BotLang, s.User.ID, "operation_completed")
+	model.SaveAdminSettings()
+	err := a.setAdminBackButton(s.User.ID, "operation_completed")
 	if err != nil {
 		return nil
 	}
 	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
 	s.Command = "admin/make_money_setting"
 
-	return NewMakeMoneySettingCommand().Serve(s)
+	return a.MakeMoneySettingCommand(s)
 }
 
-func setNewIntParameter(s *model.Situation, partition string) error {
-	lang := assets.AdminLang(s.User.ID)
+func (a *Admin) setNewIntParameter(s *model.Situation, partition string) error {
+	lang := model.AdminLang(s.User.ID)
 
 	newAmount, err := strconv.Atoi(s.Message.Text)
 	if err != nil || newAmount <= 0 {
-		text := assets.AdminText(lang, "incorrect_make_money_change_input")
-		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+		text := a.bot.AdminText(lang, "incorrect_make_money_change_input")
+		return a.msgs.NewParseMessage(s.User.ID, text)
 	}
 
 	switch partition {
 	case bonusAmount:
-		assets.AdminSettings.GetParams(s.BotLang).BonusAmount = newAmount
+		model.AdminSettings.GetParams(s.BotLang).BonusAmount = newAmount
 	case minWithdrawalAmount:
-		assets.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount = newAmount
+		model.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount = newAmount
 	case maxOfClickPDAmount:
-		assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay = newAmount
+		model.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay = newAmount
 	case referralAmount:
-		assets.AdminSettings.GetParams(s.BotLang).ReferralAmount = newAmount
+		model.AdminSettings.GetParams(s.BotLang).ReferralAmount = newAmount
 	}
 
 	return nil
 }
 
-type SetNewTextUrlCommand struct {
-}
-
-func NewSetNewTextUrlCommand() *SetNewTextUrlCommand {
-	return &SetNewTextUrlCommand{}
-}
-
-func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
+func (a *Admin) SetNewTextUrlCommand(s *model.Situation) error {
 	capitation := strings.Split(s.Params.Level, "?")[1]
 	channel, _ := strconv.Atoi(strings.Split(s.Params.Level, "?")[2])
-	lang := assets.AdminLang(s.User.ID)
+	lang := model.AdminLang(s.User.ID)
 	status := "operation_canceled"
 
 	switch capitation {
 	case "change_url":
 		url, chatID := getUrlAndChatID(s.Message)
 		if chatID == 0 {
-			text := assets.AdminText(lang, "chat_id_not_update")
-			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+			text := a.bot.AdminText(lang, "chat_id_not_update")
+			return a.msgs.NewParseMessage(s.User.ID, text)
 		}
-		assets.AdminSettings.UpdateAdvertChannelID(s.BotLang, chatID, channel)
-		assets.AdminSettings.UpdateAdvertUrl(s.BotLang, channel, url)
+		model.AdminSettings.UpdateAdvertChannelID(s.BotLang, chatID, channel)
+		model.AdminSettings.UpdateAdvertUrl(s.BotLang, channel, url)
 		//assets.AdminSettings.UpdateAdvertChan(s.BotLang, advertChan)
 	case "change_text":
-		assets.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text, channel)
+		model.AdminSettings.UpdateAdvertText(s.BotLang, s.Message.Text, channel)
 	case "change_photo":
 		if len(s.Message.Photo) == 0 {
-			text := assets.AdminText(lang, "send_only_photo")
-			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+			text := a.bot.AdminText(lang, "send_only_photo")
+			return a.msgs.NewParseMessage(s.User.ID, text)
 		}
-		assets.AdminSettings.UpdateAdvertPhoto(s.BotLang, channel, s.Message.Photo[0].FileID)
+		model.AdminSettings.UpdateAdvertPhoto(s.BotLang, channel, s.Message.Photo[0].FileID)
 	case "change_video":
 		if s.Message.Video == nil {
-			text := assets.AdminText(lang, "send_only_video")
-			return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+			text := a.bot.AdminText(lang, "send_only_video")
+			return a.msgs.NewParseMessage(s.User.ID, text)
 		}
-		assets.AdminSettings.UpdateAdvertVideo(s.BotLang, channel, s.Message.Video.FileID)
+		model.AdminSettings.UpdateAdvertVideo(s.BotLang, channel, s.Message.Video.FileID)
 	}
-	assets.SaveAdminSettings()
+	model.SaveAdminSettings()
 	status = "operation_completed"
 
-	if err := setAdminBackButton(s.BotLang, s.User.ID, status); err != nil {
+	if err := a.setAdminBackButton(s.User.ID, status); err != nil {
 		return err
 	}
 	db.RdbSetUser(s.BotLang, s.User.ID, "admin")
@@ -151,54 +135,40 @@ func (c *SetNewTextUrlCommand) Serve(s *model.Situation) error {
 		Data: "admin/change_advert_chan?" + strconv.Itoa(channel),
 	}
 	s.CallbackQuery = callback
-	return NewAdvertisementChanMenuCommand().Serve(s)
+	return a.AdvertisementChanMenuCommand(s)
 }
 
-type ChangeMinerCountCommand struct {
-}
-
-func NewChangeMinerCountCommand() *ChangeMinerCountCommand {
-	return &ChangeMinerCountCommand{}
-}
-
-func (c *ChangeMinerCountCommand) Serve(s *model.Situation) error {
+func (a *Admin) ChangeMinerCountCommand(s *model.Situation) error {
 	level := db.RdbGetMinerLevelSetting(s.BotLang, s.User.ID)
 	count := strings.Split(s.Params.Level, "?")[1]
 
 	number, _ := strconv.Atoi(s.Message.Text)
 
 	if number < 1 {
-		return msgs.NewParseMessage(s.BotLang, s.User.ID, "need_positive_number")
+		return a.msgs.NewParseMessage(s.User.ID, "need_positive_number")
 	}
 
 	switch count {
 	case "hash":
-		assets.AdminSettings.GetParams(s.BotLang).ClickAmount[level] = number
+		model.AdminSettings.GetParams(s.BotLang).ClickAmount[level] = number
 	case "price":
-		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[level] = number
+		model.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[level] = number
 	}
 
-	err := msgs.NewParseMessage(s.BotLang, s.User.ID, assets.AdminText(assets.AdminLang(s.User.ID), "operation_completed"))
+	err := a.msgs.NewParseMessage(s.User.ID, a.bot.AdminText(model.AdminLang(s.User.ID), "operation_completed"))
 	if err != nil {
 		return err
 	}
 
-	return sendMinerSettingMenu(s)
+	return a.sendMinerSettingMenu(s)
 }
 
-type AdvertisementSettingCommand struct {
-}
-
-func NewAdvertisementSettingCommand() *AdvertisementSettingCommand {
-	return &AdvertisementSettingCommand{}
-}
-
-func (c *AdvertisementSettingCommand) Serve(s *model.Situation) error {
+func (a *Admin) AdvertisementSettingCommand(s *model.Situation) error {
 	s.CallbackQuery = &tgbotapi.CallbackQuery{
 		Data: "admin/change_text_url?",
 	}
 	s.Command = "admin/advertisement"
-	return NewAdvertisementMenuCommand().Serve(s)
+	return a.AdvertisementMenuCommand(s)
 }
 
 func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
@@ -223,18 +193,18 @@ func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 	return data[1], int64(chatId)
 }
 
-func CheckAdminMessage(s *model.Situation) error {
+func (a *Admin) CheckAdminMessage(s *model.Situation) error {
 	if !ContainsInAdmin(s.User.ID) {
-		return notAdmin(s.BotLang, s.User)
+		return a.notAdmin(s.User)
 	}
 
-	s.Command, s.Err = assets.GetCommandFromText(s.Message, s.User.Language, s.User.ID)
+	s.Command, s.Err = a.bot.GetCommandFromText(s.Message, s.User.Language, s.User.ID)
 	if s.Err == nil {
 		Handler := model.Bots[s.BotLang].AdminMessageHandler.
 			GetHandler(s.Command)
 
 		if Handler != nil {
-			return Handler.Serve(s)
+			return Handler(s)
 		}
 	}
 
@@ -244,7 +214,7 @@ func CheckAdminMessage(s *model.Situation) error {
 		GetHandler(s.Command)
 
 	if Handler != nil {
-		return Handler.Serve(s)
+		return Handler(s)
 	}
 
 	return model.ErrCommandNotConverted

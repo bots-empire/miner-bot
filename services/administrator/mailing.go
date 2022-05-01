@@ -1,41 +1,34 @@
 package administrator
 
 import (
-	"github.com/Stepan1328/miner-bot/assets"
-	"github.com/Stepan1328/miner-bot/db"
-	"github.com/Stepan1328/miner-bot/model"
-	"github.com/Stepan1328/miner-bot/msgs"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"strconv"
 	"strings"
+
+	"github.com/Stepan1328/miner-bot/db"
+	"github.com/Stepan1328/miner-bot/model"
+	"github.com/bots-empire/base-bot/msgs"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type StartMailingCommand struct {
-}
-
-func NewStartMailingCommand() *StartMailingCommand {
-	return &StartMailingCommand{}
-}
-
-func (c *StartMailingCommand) Serve(s *model.Situation) error {
+func (a *Admin) StartMailingCommand(s *model.Situation) error {
 	channel, _ := strconv.Atoi(strings.Split(s.CallbackQuery.Data, "?")[1])
-	go db.StartMailing(s.BotLang, s.User, channel)
+	go a.mailing.StartMailing(s.BotLang, s.User.ID, channel)
 
-	_ = msgs.SendAdminAnswerCallback(s.BotLang, s.CallbackQuery, "mailing_successful")
-	if channel == assets.GlobalMailing {
-		return NewAdvertisementMenuCommand().Serve(s)
+	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "mailing_successful")
+	if channel == model.GlobalMailing {
+		return a.AdvertisementMenuCommand(s)
 	}
-	return resendAdvertisementMenuLevel(s.BotLang, s.User.ID, channel)
+	return a.resendAdvertisementMenuLevel(s.BotLang, s.User.ID, channel)
 }
 
-func sendMailingMenu(botLang string, userID int64, channel string) error {
-	lang := assets.AdminLang(userID)
+func (a *Admin) sendMailingMenu(botLang string, userID int64, channel string) error {
+	lang := model.AdminLang(userID)
 
-	text := assets.AdminText(lang, "mailing_main_text")
-	markUp := createMailingMarkUp(botLang, lang, channel)
+	text := a.bot.AdminText(lang, "mailing_main_text")
+	markUp := createMailingMarkUp(botLang, channel, a.bot.AdminLibrary[lang])
 
 	if db.RdbGetAdminMsgID(botLang, userID) == 0 {
-		msgID, err := msgs.NewIDParseMarkUpMessage(botLang, userID, &markUp, text)
+		msgID, err := a.msgs.NewIDParseMarkUpMessage(userID, &markUp, text)
 		if err != nil {
 			return err
 		}
@@ -43,10 +36,11 @@ func sendMailingMenu(botLang string, userID int64, channel string) error {
 		db.RdbSetAdminMsgID(botLang, userID, msgID)
 		return nil
 	}
-	return msgs.NewEditMarkUpMessage(botLang, userID, db.RdbGetAdminMsgID(botLang, userID), &markUp, text)
+
+	return a.msgs.NewEditMarkUpMessage(userID, db.RdbGetAdminMsgID(botLang, userID), &markUp, text)
 }
 
-func createMailingMarkUp(botLang, lang, channel string) tgbotapi.InlineKeyboardMarkup {
+func createMailingMarkUp(botLang, channel string, texts map[string]string) tgbotapi.InlineKeyboardMarkup {
 	markUp := &msgs.InlineMarkUp{}
 
 	if buttonUnderAdvertisementUnable(botLang) {
@@ -71,15 +65,15 @@ func createMailingMarkUp(botLang, lang, channel string) tgbotapi.InlineKeyboardM
 		)
 	}
 
-	return markUp.Build(lang)
+	return markUp.Build(texts)
 }
 
-func resendAdvertisementMenuLevel(botLang string, userID int64, channel int) error {
+func (a *Admin) resendAdvertisementMenuLevel(botLang string, userID int64, channel int) error {
 	db.DeleteOldAdminMsg(botLang, userID)
 
 	db.RdbSetUser(botLang, userID, "admin/advertisement")
-	inlineMarkUp, text := getAdvertisementMenu(botLang, userID, channel)
-	msgID, err := msgs.NewIDParseMarkUpMessage(botLang, userID, inlineMarkUp, text)
+	inlineMarkUp, text := a.getAdvertisementMenu(botLang, userID, channel)
+	msgID, err := a.msgs.NewIDParseMarkUpMessage(userID, inlineMarkUp, text)
 	if err != nil {
 		return err
 	}
@@ -88,5 +82,5 @@ func resendAdvertisementMenuLevel(botLang string, userID int64, channel int) err
 }
 
 func buttonUnderAdvertisementUnable(botLang string) bool {
-	return assets.AdminSettings.GlobalParameters[botLang].Parameters.ButtonUnderAdvert
+	return model.AdminSettings.GlobalParameters[botLang].Parameters.ButtonUnderAdvert
 }

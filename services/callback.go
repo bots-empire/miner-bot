@@ -5,14 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/db"
 	"github.com/Stepan1328/miner-bot/log"
 	"github.com/Stepan1328/miner-bot/model"
-	"github.com/Stepan1328/miner-bot/msgs"
-	"github.com/Stepan1328/miner-bot/services/administrator"
-	"github.com/Stepan1328/miner-bot/services/auth"
 	"github.com/Stepan1328/miner-bot/utils"
+	"github.com/bots-empire/base-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 )
@@ -25,28 +22,28 @@ func (h *CallBackHandlers) GetHandler(command string) model.Handler {
 	return h.Handlers[command]
 }
 
-func (h *CallBackHandlers) Init() {
+func (h *CallBackHandlers) Init(userSrv *Users) {
 	// Start commands
-	h.OnCommand("/language", NewLanguageCommand())
+	h.OnCommand("/language", userSrv.LanguageCommand)
 
 	// Money commands
-	h.OnCommand("/make_money_click", NewHandleClickCommand())
-	h.OnCommand("/upgrade_miner_lvl", NewUpgradeMinerLvlCommand())
-	h.OnCommand("/send_bonus_to_user", NewGetBonusCommand())
-	h.OnCommand("/withdrawal_money", NewRecheckSubscribeCommand())
-	h.OnCommand("/promotion_case", NewPromotionCaseCommand())
+	h.OnCommand("/make_money_click", userSrv.HandleClickCommand)
+	h.OnCommand("/upgrade_miner_lvl", userSrv.UpgradeMinerLvlCommand)
+	h.OnCommand("/send_bonus_to_user", userSrv.GetBonusCommand)
+	h.OnCommand("/withdrawal_money", userSrv.RecheckSubscribeCommand)
+	h.OnCommand("/promotion_case", userSrv.PromotionCaseCommand)
 }
 
 func (h *CallBackHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-func checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
+func (u *Users) checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
 	if strings.Contains(s.Params.Level, "admin") {
-		if err := administrator.CheckAdminCallback(s); err != nil {
+		if err := u.admin.CheckAdminCallback(s); err != nil {
 			text := fmt.Sprintf("error with serve admin callback command: %s", err.Error())
 			logger.Warn(text)
-			msgs.SendNotificationToDeveloper(text)
+			u.Msgs.SendNotificationToDeveloper(text, false)
 		}
 		return
 	}
@@ -58,8 +55,8 @@ func checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils
 		sortCentre.ServeHandler(handler, s, func(err error) {
 			text := fmt.Sprintf("error with serve user callback command: %s", err.Error())
 			logger.Warn(text)
-			msgs.SendNotificationToDeveloper(text)
-			smthWentWrong(s.BotLang, s.CallbackQuery.Message.Chat.ID, s.User.Language)
+			u.Msgs.SendNotificationToDeveloper(text, false)
+			u.smthWentWrong(s.CallbackQuery.Message.Chat.ID, s.User.Language)
 		})
 
 		return
@@ -67,17 +64,10 @@ func checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils
 
 	text := fmt.Sprintf("get callback data='%s', but they didn't react in any way", s.CallbackQuery.Data)
 	logger.Warn(text)
-	msgs.SendNotificationToDeveloper(text)
+	u.Msgs.SendNotificationToDeveloper(text, false)
 }
 
-type LanguageCommand struct {
-}
-
-func NewLanguageCommand() *LanguageCommand {
-	return &LanguageCommand{}
-}
-
-func (c *LanguageCommand) Serve(s *model.Situation) error {
+func (u *Users) LanguageCommand(s *model.Situation) error {
 	lang := strings.Split(s.CallbackQuery.Data, "?")[1]
 
 	level := db.GetLevel(s.BotLang, s.User.ID)
@@ -87,33 +77,26 @@ func (c *LanguageCommand) Serve(s *model.Situation) error {
 
 	s.User.Language = lang
 
-	return NewStartCommand().Serve(s)
+	return u.StartCommand(s)
 }
 
-type HandleClickCommand struct {
-}
-
-func NewHandleClickCommand() *HandleClickCommand {
-	return &HandleClickCommand{}
-}
-
-func (c *HandleClickCommand) Serve(s *model.Situation) error {
-	err, ok := auth.MakeClick(s)
+func (u *Users) HandleClickCommand(s *model.Situation) error {
+	err, ok := u.auth.MakeClick(s)
 	if err != nil {
 		return errors.Wrap(err, "failed make click")
 	}
 	if ok {
 		return nil
 	}
-	_ = msgs.SendAnswerCallback(s.BotLang, s.CallbackQuery, s.User.Language, "click_done")
+	_ = u.Msgs.SendAnswerCallback(s.CallbackQuery, u.bot.LangText(s.User.Language, "click_done"))
 
-	s.User, err = auth.GetUser(s.BotLang, s.User.ID)
+	s.User, err = u.auth.GetUser(s.User.ID)
 	if err != nil {
 		return nil
 	}
-	text, markUp := buildClickMsg(s.BotLang, s.User)
+	text, markUp := u.buildClickMsg(s.BotLang, s.User)
 
-	err = msgs.NewEditMarkUpMessage(s.BotLang, s.User.ID, s.CallbackQuery.Message.MessageID, markUp, text)
+	err = u.Msgs.NewEditMarkUpMessage(s.User.ID, s.CallbackQuery.Message.MessageID, markUp, text)
 	if err != nil && err.Error() == "Bad Request: message to edit not found" {
 		return nil
 	}
@@ -121,99 +104,73 @@ func (c *HandleClickCommand) Serve(s *model.Situation) error {
 	return err
 }
 
-type UpgradeMinerLvlCommand struct {
-}
-
-func NewUpgradeMinerLvlCommand() *UpgradeMinerLvlCommand {
-	return &UpgradeMinerLvlCommand{}
-}
-
-func (c *UpgradeMinerLvlCommand) Serve(s *model.Situation) error {
-	nilBalance, err := auth.UpgradeMinerLevel(s)
+func (u *Users) UpgradeMinerLvlCommand(s *model.Situation) error {
+	nilBalance, err := u.auth.UpgradeMinerLevel(s)
 	if err == model.ErrMaxLevelAlreadyCompleted {
-		return reachedMaxMinerLvl(s)
+		return u.reachedMaxMinerLvl(s)
 	}
 	if err != nil {
 		return err
 	}
 
 	if nilBalance {
-		text := assets.LangText(s.User.Language, "failed_upgrade_miner")
+		text := u.bot.LangText(s.User.Language, "failed_upgrade_miner")
 
-		return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+		return u.Msgs.NewParseMessage(s.User.ID, text)
 	}
 
-	_ = msgs.SendMsgToUser(s.BotLang, tgbotapi.NewDeleteMessage(s.User.ID, s.CallbackQuery.Message.MessageID))
+	_ = u.Msgs.SendMsgToUser(tgbotapi.NewDeleteMessage(s.User.ID, s.CallbackQuery.Message.MessageID))
 
-	text := assets.LangText(s.User.Language, "successful_upgrade_miner",
+	text := u.bot.LangText(s.User.Language, "successful_upgrade_miner",
 		s.User.MinerLevel,
-		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel-1])
+		model.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel-1])
 
-	return msgs.NewParseMessage(s.BotLang, s.User.ID, text)
+	return u.Msgs.NewParseMessage(s.User.ID, text)
 }
 
-type GetBonusCommand struct {
+func (u *Users) GetBonusCommand(s *model.Situation) error {
+	return u.auth.GetABonus(s)
 }
 
-func NewGetBonusCommand() *GetBonusCommand {
-	return &GetBonusCommand{}
-}
-
-func (c *GetBonusCommand) Serve(s *model.Situation) error {
-	return auth.GetABonus(s)
-}
-
-type RecheckSubscribeCommand struct {
-}
-
-func NewRecheckSubscribeCommand() *RecheckSubscribeCommand {
-	return &RecheckSubscribeCommand{}
-}
-
-func (c *RecheckSubscribeCommand) Serve(s *model.Situation) error {
+func (u *Users) RecheckSubscribeCommand(s *model.Situation) error {
 	amount := strings.Split(s.CallbackQuery.Data, "?")[1]
 	s.Message = &tgbotapi.Message{
 		Text: amount,
 	}
-	if err := msgs.SendAnswerCallback(s.BotLang, s.CallbackQuery, s.User.Language, "invitation_to_subscribe"); err != nil {
+	if err := u.Msgs.SendAnswerCallback(s.CallbackQuery, u.bot.LangText(s.User.Language, "invitation_to_subscribe")); err != nil {
 		return err
 	}
 	amountInt, _ := strconv.Atoi(amount)
 
-	if auth.CheckSubscribeToWithdrawal(s, amountInt) {
+	if u.auth.CheckSubscribeToWithdrawal(s, amountInt) {
 		db.RdbSetUser(s.BotLang, s.User.ID, "main")
 
-		return NewStartCommand().Serve(s)
+		return u.StartCommand(s)
 	}
 	return nil
 }
 
-type PromotionCaseCommand struct {
-}
-
-func NewPromotionCaseCommand() *PromotionCaseCommand {
-	return &PromotionCaseCommand{}
-}
-
-func (c *PromotionCaseCommand) Serve(s *model.Situation) error {
+func (u *Users) PromotionCaseCommand(s *model.Situation) error {
 	cost, err := strconv.Atoi(strings.Split(s.CallbackQuery.Data, "?")[1])
 	if err != nil {
 		return err
 	}
 
 	if s.User.Balance < cost {
-		return msgs.SendAnswerCallback(s.BotLang, s.CallbackQuery, s.User.Language, "not_enough_money")
+		lowBalanceText := u.bot.LangText(s.User.Language, "not_enough_money")
+		return u.Msgs.SendAnswerCallback(s.CallbackQuery, lowBalanceText)
 	}
 
 	db.RdbSetUser(s.BotLang, s.User.ID, s.CallbackQuery.Data)
-	msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "invitation_to_send_link_text"))
+	msg := tgbotapi.NewMessage(s.User.ID, u.bot.LangText(s.User.Language, "invitation_to_send_link_text"))
 	msg.ReplyMarkup = msgs.NewMarkUp(
 		msgs.NewRow(msgs.NewDataButton("withdraw_cancel")),
-	).Build(s.User.Language)
+	).Build(u.bot.Language[s.User.Language])
 
-	if err := msgs.SendAnswerCallback(s.BotLang, s.CallbackQuery, s.User.Language, "invitation_to_send_link"); err != nil {
+	callBackText := u.bot.LangText(s.User.Language, "invitation_to_send_link")
+	if err := u.Msgs.SendAnswerCallback(s.CallbackQuery, callBackText); err != nil {
 		return err
 	}
 
-	return msgs.SendMsgToUser(s.BotLang, msg)
+	return u.Msgs.SendMsgToUser(msg)
 }

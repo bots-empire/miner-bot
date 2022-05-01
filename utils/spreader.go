@@ -32,7 +32,7 @@ type condition struct {
 }
 
 func (c condition) serve() error {
-	return c.handler.Serve(c.situation)
+	return c.handler(c.situation)
 }
 
 func (b *block) serve() {

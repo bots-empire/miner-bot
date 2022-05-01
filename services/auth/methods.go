@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Stepan1328/miner-bot/assets"
 	"github.com/Stepan1328/miner-bot/model"
-	"github.com/Stepan1328/miner-bot/msgs"
+	"github.com/bots-empire/base-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
 )
@@ -17,25 +16,24 @@ const (
 	oneSatoshi = 0.00000001
 )
 
-func MakeClick(s *model.Situation) (error, bool) {
+func (a *Auth) MakeClick(s *model.Situation) (error, bool) {
 	if time.Now().Unix()/86400 > s.User.LastClick/86400 {
-		if err := resetTodayMiningCounter(s); err != nil {
+		if err := resetTodayMiningCounter(s, a.bot.DataBase); err != nil {
 			return err, false
 		}
 	}
 
-	if s.User.MiningToday >= assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay {
-		return reachedMaxAmountPerDay(s), true
+	if s.User.MiningToday >= model.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay {
+		return a.reachedMaxAmountPerDay(s), true
 	}
 
-	return increaseBalanceAfterClick(s), false
+	return a.increaseBalanceAfterClick(s), false
 }
 
-func resetTodayMiningCounter(s *model.Situation) error {
+func resetTodayMiningCounter(s *model.Situation, dataBase *sql.DB) error {
 	s.User.MiningToday = 0
 	s.User.LastClick = time.Now().Unix()
 
-	dataBase := model.GetDB(s.BotLang)
 	rows, err := dataBase.Query(`
 UPDATE users SET
       mining_today = 0, 
@@ -51,24 +49,24 @@ WHERE id = ?;`,
 	return nil
 }
 
-func reachedMaxAmountPerDay(s *model.Situation) error {
-	text := assets.LangText(s.User.Language, "reached_max_amount_per_day",
-		assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay,
-		assets.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay)
+func (a *Auth) reachedMaxAmountPerDay(s *model.Situation) error {
+	text := a.bot.LangText(s.User.Language, "reached_max_amount_per_day",
+		model.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay,
+		model.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay)
 
 	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", assets.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
-	).Build(s.User.Language)
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", model.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
+	).Build(a.bot.Language[s.User.Language])
 
-	return msgs.NewParseMarkUpMessage(s.BotLang, s.User.ID, &markUp, text)
+	return a.msgs.NewParseMarkUpMessage(s.User.ID, &markUp, text)
 }
 
-func increaseBalanceAfterClick(s *model.Situation) error {
+func (a *Auth) increaseBalanceAfterClick(s *model.Situation) error {
 	s.User.BalanceHash += getClickAmount(s.BotLang, s.User.MinerLevel)
 	s.User.MiningToday++
 	s.User.LastClick = time.Now().Unix()
 
-	dataBase := model.GetDB(s.BotLang)
+	dataBase := a.bot.GetDataBase()
 	_, err := dataBase.Exec(`
 UPDATE users 
 	SET balance_hash = balance_hash + ?, 
@@ -80,7 +78,7 @@ WHERE id = ?;`,
 		s.User.ID)
 	if err != nil {
 		text := "Failed increase balance after click: " + err.Error()
-		msgs.SendNotificationToDeveloper(text)
+		a.msgs.SendNotificationToDeveloper(text, false)
 		return err
 	}
 
@@ -88,10 +86,10 @@ WHERE id = ?;`,
 }
 
 func getClickAmount(botLang string, minerLevel int8) int {
-	return assets.AdminSettings.GetClickAmount(botLang, int(minerLevel-1))
+	return model.AdminSettings.GetClickAmount(botLang, int(minerLevel-1))
 }
 
-func ChangeHashToBTC(s *model.Situation) (error, float64) {
+func (a *Auth) ChangeHashToBTC(s *model.Situation) (error, float64) {
 	count, err := extractAmountFromMsg(s.Message.Text)
 	if err != nil {
 		return nil, 0
@@ -101,12 +99,11 @@ func ChangeHashToBTC(s *model.Situation) (error, float64) {
 		return nil, 0
 	}
 
-	amountBTC := count / assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
-	clearAmount := amountBTC * assets.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
+	amountBTC := count / model.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
+	clearAmount := amountBTC * model.AdminSettings.GetParams(s.BotLang).ExchangeHashToBTC
 	amountToChange := oneSatoshi * float64(amountBTC)
 
-	dataBase := model.GetDB(s.BotLang)
-	_, err = dataBase.Exec(`
+	_, err = a.bot.GetDataBase().Exec(`
 UPDATE users 
 	SET balance_hash = balance_hash - ?, 
 	    balance_btc = balance_btc + ?
@@ -116,7 +113,7 @@ WHERE id = ?;`,
 		s.User.ID)
 	if err != nil {
 		text := "Failed exchange hash to btc: " + err.Error()
-		msgs.SendNotificationToDeveloper(text)
+		a.msgs.SendNotificationToDeveloper(text, false)
 		return err, 0
 	}
 
@@ -128,18 +125,18 @@ func extractAmountFromMsg(text string) (int, error) {
 	return strconv.Atoi(text)
 }
 
-func ChangeBTCToCurrency(s *model.Situation) (error, int) {
+func (a *Auth) ChangeBTCToCurrency(s *model.Situation) (error, int) {
 	count, err := extractAmountFromMsg(s.Message.Text)
 	if err != nil {
 		return nil, 0
 	}
 
-	amountBTC := float64(count) * assets.AdminSettings.GetParams(s.BotLang).ExchangeBTCToCurrency * oneSatoshi
+	amountBTC := float64(count) * model.AdminSettings.GetParams(s.BotLang).ExchangeBTCToCurrency * oneSatoshi
 	if count <= 0 || amountBTC > s.User.BalanceBTC {
 		return nil, 0
 	}
 
-	dataBase := model.GetDB(s.BotLang)
+	dataBase := a.bot.GetDataBase()
 	_, err = dataBase.Exec(`
 UPDATE users 
 	SET balance_btc = balance_btc - ?, 
@@ -150,7 +147,7 @@ WHERE id = ?;`,
 		s.User.ID)
 	if err != nil {
 		text := "Failed exchange btc to currency: " + err.Error()
-		msgs.SendNotificationToDeveloper(text)
+		a.msgs.SendNotificationToDeveloper(text, false)
 		return err, 0
 	}
 
@@ -158,32 +155,32 @@ WHERE id = ?;`,
 	return nil, count
 }
 
-func UpgradeMinerLevel(s *model.Situation) (bool, error) {
+func (a *Auth) UpgradeMinerLevel(s *model.Situation) (bool, error) {
 	var err error
-	s.User, err = GetUser(s.BotLang, s.User.ID)
+	s.User, err = a.GetUser(s.User.ID)
 	if err != nil {
 		return false, err
 	}
 
-	if int8(len(assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost)) == s.User.MinerLevel {
+	if int8(len(model.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost)) == s.User.MinerLevel {
 		return false, model.ErrMaxLevelAlreadyCompleted
 	}
 
-	if s.User.BalanceHash < assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel] {
+	if s.User.BalanceHash < model.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel] {
 		return true, nil
 	}
 
-	dataBase := model.GetDB(s.BotLang)
+	dataBase := a.bot.GetDataBase()
 	_, err = dataBase.Exec(`
 UPDATE users 
 	SET balance_hash = balance_hash - ?, 
 	    miner_level = miner_level + 1
 WHERE id = ?;`,
-		assets.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel],
+		model.AdminSettings.GetParams(s.BotLang).UpgradeMinerCost[s.User.MinerLevel],
 		s.User.ID)
 	if err != nil {
 		text := "Failed update miner level: " + err.Error()
-		msgs.SendNotificationToDeveloper(text)
+		a.msgs.SendNotificationToDeveloper(text, false)
 		return false, err
 	}
 	s.User.MinerLevel++
@@ -191,62 +188,62 @@ WHERE id = ?;`,
 	return false, nil
 }
 
-func WithdrawMoneyFromBalance(s *model.Situation, amount string) error {
+func (a *Auth) WithdrawMoneyFromBalance(s *model.Situation, amount string) error {
 	amount = strings.Replace(amount, " ", "", -1)
 	amountInt, err := strconv.Atoi(amount)
 	if err != nil {
-		msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "incorrect_amount"))
-		return msgs.SendMsgToUser(s.BotLang, msg)
+		msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "incorrect_amount"))
+		return a.msgs.SendMsgToUser(msg)
 	}
 
-	if amountInt < assets.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount {
-		return minAmountNotReached(s.User, s.BotLang)
+	if amountInt < model.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount {
+		return a.minAmountNotReached(s.User, s.BotLang)
 	}
 
 	if s.User.Balance < amountInt {
-		msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "lack_of_funds"))
-		return msgs.SendMsgToUser(s.BotLang, msg)
+		msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "lack_of_funds"))
+		return a.msgs.SendMsgToUser(msg)
 	}
 
 	if s.User.MinerLevel < 3 {
-		msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "insufficient_miner_level"))
-		return msgs.SendMsgToUser(s.BotLang, msg)
+		msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "insufficient_miner_level"))
+		return a.msgs.SendMsgToUser(msg)
 	}
 
-	return sendInvitationToSubs(s, amount)
+	return a.sendInvitationToSubs(s, amount)
 }
 
-func minAmountNotReached(u *model.User, botLang string) error {
-	text := assets.LangText(u.Language, "minimum_amount_not_reached",
-		assets.AdminSettings.GetParams(botLang).MinWithdrawalAmount)
+func (a *Auth) minAmountNotReached(u *model.User, botLang string) error {
+	text := a.bot.LangText(u.Language, "minimum_amount_not_reached",
+		model.AdminSettings.GetParams(botLang).MinWithdrawalAmount)
 
-	return msgs.NewParseMessage(botLang, u.ID, text)
+	return a.msgs.NewParseMessage(u.ID, text)
 }
 
-func sendInvitationToSubs(s *model.Situation, amount string) error {
-	text := assets.LangText(s.User.Language, "withdrawal_not_subs_text")
+func (a *Auth) sendInvitationToSubs(s *model.Situation, amount string) error {
+	text := a.bot.LangText(s.User.Language, "withdrawal_not_subs_text")
 
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 	msg.ReplyMarkup = msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", assets.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
 		msgs.NewIlRow(msgs.NewIlDataButton("im_subscribe_button", "/withdrawal_money?"+amount)),
-	).Build(s.User.Language)
+	).Build(a.bot.Language[s.User.Language])
 
-	return msgs.SendMsgToUser(s.BotLang, msg)
+	return a.msgs.SendMsgToUser(msg)
 }
 
-func CheckSubscribeToWithdrawal(s *model.Situation, amount int) bool {
+func (a *Auth) CheckSubscribeToWithdrawal(s *model.Situation, amount int) bool {
 	if s.User.Balance < amount {
 		return false
 	}
 
-	if !CheckSubscribe(s, "withdrawal") {
-		_ = sendInvitationToSubs(s, strconv.Itoa(amount))
+	if !a.CheckSubscribe(s, "withdrawal") {
+		_ = a.sendInvitationToSubs(s, strconv.Itoa(amount))
 		return false
 	}
 
 	s.User.Balance -= amount
-	dataBase := model.GetDB(s.BotLang)
+	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 UPDATE users 
 	SET balance = ?
@@ -258,24 +255,24 @@ WHERE id = ?;`,
 	}
 	_ = rows.Close()
 
-	msg := tgbotapi.NewMessage(s.User.ID, assets.LangText(s.User.Language, "successfully_withdrawn"))
-	_ = msgs.SendMsgToUser(s.BotLang, msg)
+	msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "successfully_withdrawn"))
+	_ = a.msgs.SendMsgToUser(msg)
 	return true
 }
 
-func GetABonus(s *model.Situation) error {
-	if !CheckSubscribe(s, "get_bonus") {
-		text := assets.LangText(s.User.Language, "user_dont_subscribe")
-		return msgs.SendSimpleMsg(s.BotLang, s.User.ID, text)
+func (a *Auth) GetABonus(s *model.Situation) error {
+	if !a.CheckSubscribe(s, "get_bonus") {
+		text := a.bot.LangText(s.User.Language, "user_dont_subscribe")
+		return a.msgs.SendSimpleMsg(s.User.ID, text)
 	}
 
 	if s.User.TakeBonus {
-		text := assets.LangText(s.User.Language, "bonus_already_have")
-		return msgs.SendSimpleMsg(s.BotLang, s.User.ID, text)
+		text := a.bot.LangText(s.User.Language, "bonus_already_have")
+		return a.msgs.SendSimpleMsg(s.User.ID, text)
 	}
 
-	s.User.Balance += assets.AdminSettings.GetParams(s.BotLang).BonusAmount
-	dataBase := model.GetDB(s.BotLang)
+	s.User.Balance += model.AdminSettings.GetParams(s.BotLang).BonusAmount
+	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 UPDATE users 
 	SET balance = ?, 
@@ -289,27 +286,27 @@ WHERE id = ?;`,
 	}
 	_ = rows.Close()
 
-	text := assets.LangText(s.User.Language, "bonus_have_received")
-	return msgs.SendSimpleMsg(s.BotLang, s.User.ID, text)
+	text := a.bot.LangText(s.User.Language, "bonus_have_received")
+	return a.msgs.SendSimpleMsg(s.User.ID, text)
 }
 
-func CheckSubscribe(s *model.Situation, source string) bool {
+func (a *Auth) CheckSubscribe(s *model.Situation, source string) bool {
 	model.CheckSubscribe.WithLabelValues(
-		model.GetGlobalBot(s.BotLang).BotLink,
+		a.bot.BotLink,
 		s.BotLang,
-		assets.AdminSettings.GetAdvertUrl(s.BotLang, assets.MainAdvert),
+		model.AdminSettings.GetAdvertUrl(s.BotLang, model.MainAdvert),
 		source,
 	).Inc()
 
 	member, err := model.Bots[s.BotLang].Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
 		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
-			ChatID: assets.AdminSettings.GetAdvertChannelID(s.BotLang, assets.MainAdvert),
+			ChatID: model.AdminSettings.GetAdvertChannelID(s.BotLang, model.MainAdvert),
 			UserID: s.User.ID,
 		},
 	})
 
 	if err == nil {
-		if err := addMemberToSubsBase(s); err != nil {
+		if err := a.addMemberToSubsBase(s); err != nil {
 			return false
 		}
 		return checkMemberStatus(member)
@@ -330,8 +327,8 @@ func checkMemberStatus(member tgbotapi.ChatMember) bool {
 	return false
 }
 
-func addMemberToSubsBase(s *model.Situation) error {
-	dataBase := model.GetDB(s.BotLang)
+func (a *Auth) addMemberToSubsBase(s *model.Situation) error {
+	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 SELECT * FROM subs 
 	WHERE id = ?;`,
