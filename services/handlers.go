@@ -150,6 +150,10 @@ func (u *Users) printNewUpdate(update *tgbotapi.Update, logger log.Logger) {
 	}
 
 	if update.CallbackQuery != nil {
+		if update.CallbackQuery.Data == "/make_money_click" {
+			return
+		}
+
 		logger.Info(updatePrintHeader, model.UpdateStatistic.Counter, u.bot.BotLang, update.CallbackQuery.Data)
 		return
 	}
