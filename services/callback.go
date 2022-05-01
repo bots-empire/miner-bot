@@ -41,9 +41,14 @@ func (h *CallBackHandlers) OnCommand(command string, handler model.Handler) {
 func (u *Users) checkCallbackQuery(s *model.Situation, logger log.Logger, sortCentre *utils.Spreader) {
 	if strings.Contains(s.Params.Level, "admin") {
 		if err := u.admin.CheckAdminCallback(s); err != nil {
-			text := fmt.Sprintf("error with serve admin callback command: %s", err.Error())
-			logger.Warn(text)
+			text := fmt.Sprintf("%s // %s // error with serve admin callback command: %s",
+				u.bot.BotLang,
+				u.bot.BotLink,
+				err.Error(),
+			)
 			u.Msgs.SendNotificationToDeveloper(text, false)
+
+			logger.Warn(text)
 		}
 		return
 	}
@@ -53,18 +58,28 @@ func (u *Users) checkCallbackQuery(s *model.Situation, logger log.Logger, sortCe
 
 	if handler != nil {
 		sortCentre.ServeHandler(handler, s, func(err error) {
-			text := fmt.Sprintf("error with serve user callback command: %s", err.Error())
-			logger.Warn(text)
+			text := fmt.Sprintf("%s // %s // error with serve user callback command: %s",
+				u.bot.BotLang,
+				u.bot.BotLink,
+				err.Error(),
+			)
 			u.Msgs.SendNotificationToDeveloper(text, false)
+
+			logger.Warn(text)
 			u.smthWentWrong(s.CallbackQuery.Message.Chat.ID, s.User.Language)
 		})
 
 		return
 	}
 
-	text := fmt.Sprintf("get callback data='%s', but they didn't react in any way", s.CallbackQuery.Data)
-	logger.Warn(text)
+	text := fmt.Sprintf("%s // %s // get callback data='%s', but they didn't react in any way",
+		u.bot.BotLang,
+		u.bot.BotLink,
+		s.CallbackQuery.Data,
+	)
 	u.Msgs.SendNotificationToDeveloper(text, false)
+
+	logger.Warn(text)
 }
 
 func (u *Users) LanguageCommand(s *model.Situation) error {

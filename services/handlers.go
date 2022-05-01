@@ -217,9 +217,14 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 
 		if handler != nil {
 			sortCentre.ServeHandler(handler, situation, func(err error) {
-				text := fmt.Sprintf("error with serve user msg command: %s", err.Error())
-				logger.Warn(text)
+				text := fmt.Sprintf("%s // %s // error with serve user msg command: %s",
+					u.bot.BotLang,
+					u.bot.BotLink,
+					err.Error(),
+				)
 				u.Msgs.SendNotificationToDeveloper(text, false)
+
+				logger.Warn(text)
 				u.smthWentWrong(situation.Message.Chat.ID, situation.User.Language)
 			})
 			return
@@ -233,9 +238,14 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 
 	if handler != nil {
 		sortCentre.ServeHandler(handler, situation, func(err error) {
-			text := fmt.Sprintf("error with serve user level command: %s", err.Error())
-			logger.Warn(text)
+			text := fmt.Sprintf("%s // %s // error with serve user level command: %s",
+				u.bot.BotLang,
+				u.bot.BotLink,
+				err.Error(),
+			)
 			u.Msgs.SendNotificationToDeveloper(text, false)
+
+			logger.Warn(text)
 			u.smthWentWrong(situation.Message.Chat.ID, situation.User.Language)
 		})
 		return

@@ -107,8 +107,6 @@ INSERT INTO users
 	rows, err = dataBase.Query("UPDATE users SET balance = ?, referral_count = ? WHERE id = ?;",
 		baseUser.Balance, baseUser.ReferralCount+1, baseUser.ID)
 	if err != nil {
-		text := "Fatal Err with DB - auth.85 //" + err.Error()
-		a.msgs.SendNotificationToDeveloper(text, false)
 		return err
 	}
 	_ = rows.Close()
