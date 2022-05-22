@@ -3,7 +3,7 @@ module github.com/Stepan1328/miner-bot
 go 1.17
 
 require (
-	github.com/bots-empire/base-bot v0.0.0-20220430190710-feded18facad
+	github.com/bots-empire/base-bot v1.0.1
 	github.com/fatih/color v1.13.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.6.0

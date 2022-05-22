@@ -12,7 +12,7 @@ const (
 	AvailableSymbolInHash = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
 	HashKeyLength         = 10
 
-	botLink = "%s?start=%s"
+	botLinkBase = "%s?start=%s"
 )
 
 type ReferralLinkInfo struct {
@@ -29,7 +29,7 @@ func EncodeLink(database *sql.DB, botLink string, link *ReferralLinkInfo) (strin
 		return "", errors.Wrap(err, "save link in database")
 	}
 
-	return fmt.Sprintf(botLink, botLink, link.HashKey), nil
+	return fmt.Sprintf(botLinkBase, botLink, link.HashKey), nil
 }
 
 func getHash() string {

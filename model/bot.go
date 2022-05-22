@@ -148,7 +148,7 @@ func FillBotsConfig() {
 
 	err = json.Unmarshal(bytes, &Bots)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	for lang, bot := range Bots {

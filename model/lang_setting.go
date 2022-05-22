@@ -62,19 +62,11 @@ func getSearchText(message *tgbotapi.Message) string {
 }
 
 func (b *GlobalBot) searchInAdminCommands(userID int64, searchText string) string {
-	lang := getAdminLang(userID)
+	lang := AdminLang(userID)
 	for key, text := range b.AdminLibrary[lang] {
 		if text == searchText {
 			return b.Commands[key]
 		}
-	}
-	return ""
-}
-
-func getAdminLang(userID int64) string {
-	admin, exist := AdminSettings.AdminID[userID]
-	if exist {
-		return admin.Language
 	}
 	return ""
 }
@@ -91,5 +83,9 @@ func (b *GlobalBot) ParseAdminMap() {
 }
 
 func AdminLang(userID int64) string {
-	return AdminSettings.AdminID[userID].Language
+	admin, exist := AdminSettings.AdminID[userID]
+	if exist {
+		return admin.Language
+	}
+	return ""
 }
