@@ -15,4 +15,5 @@ type User struct {
 	RegisterTime    int64   `json:"register_time"`
 	MinWithdrawal   int     `json:"min_withdrawal"`
 	FirstWithdrawal bool    `json:"first_withdrawal"`
+	Status          string  `json:"status"`
 }

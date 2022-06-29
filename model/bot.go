@@ -12,12 +12,15 @@ import (
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
 	tokensPath       = "./cfg/tokens.json"
 	dbDriver         = "mysql"
 	redisDefaultAddr = "127.0.0.1:6379"
+
+	statusDeleted = "deleted"
 )
 
 var Bots = make(map[string]*GlobalBot)
@@ -70,6 +73,16 @@ func UploadDataBase(dbLang string) *sql.DB {
 	dataBase, err = sql.Open(dbDriver, cfg.DBCfg.User+cfg.DBCfg.Password+"@/"+cfg.DBCfg.Names[dbLang]) //TODO: refactor
 	if err != nil {
 		log.Fatalf("Failed open database: %s\n", err.Error())
+	}
+
+	_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN status text NOT NULL;")
+	if err != nil && err.Error() != "Error 1060: Duplicate column name 'status'" {
+		log.Fatalln(err)
+	}
+
+	_, err = dataBase.Exec("UPDATE users SET status = 'active' WHERE status = '';")
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	TakeAllUsers(dataBase)
@@ -156,6 +169,10 @@ func FillBotsConfig() {
 	}
 }
 
+func (b *GlobalBot) GetBotLang() string {
+	return b.BotLang
+}
+
 func (b *GlobalBot) GetBot() *tgbotapi.BotAPI {
 	return b.Bot
 }
@@ -219,4 +236,24 @@ func (b *GlobalBot) ButtonUnderAdvert() bool {
 
 func (b *GlobalBot) AdvertisingChoice(channel int) string {
 	return AdminSettings.GlobalParameters[b.BotLang].AdvertisingChoice[channel]
+}
+
+func (b *GlobalBot) BlockUser(userID int64) error {
+	_, err := b.GetDataBase().Exec(`
+UPDATE users
+	SET status = ?
+WHERE id = ?`,
+		statusDeleted,
+		userID)
+
+	return err
+}
+
+func (b *GlobalBot) GetMetrics(metricKey string) *prometheus.CounterVec {
+	metricsByKey := map[string]*prometheus.CounterVec{
+		"total_mailing_users": MailToUser,
+		"total_block_users":   BlockUser,
+	}
+
+	return metricsByKey[metricKey]
 }

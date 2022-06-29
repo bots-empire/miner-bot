@@ -72,7 +72,7 @@ func (a *Admin) CheckNewAdmin(s *model.Situation) error {
 		}
 		model.SaveAdminSettings()
 
-		text := a.bot.AdminText(s.User.Language, "welcome_to_admin")
+		text := a.bot.AdminText("ru", "welcome_to_admin")
 		delete(availableKeys, key)
 		return a.msgs.NewParseMessage(s.User.ID, text)
 	}

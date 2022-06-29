@@ -134,7 +134,7 @@ func (u *Users) UpgradeMinerLvlCommand(s *model.Situation) error {
 		return u.Msgs.NewParseMessage(s.User.ID, text)
 	}
 
-	_ = u.Msgs.SendMsgToUser(tgbotapi.NewDeleteMessage(s.User.ID, s.CallbackQuery.Message.MessageID))
+	_ = u.Msgs.SendMsgToUser(tgbotapi.NewDeleteMessage(s.User.ID, s.CallbackQuery.Message.MessageID), s.User.ID)
 
 	text := u.bot.LangText(s.User.Language, "successful_upgrade_miner",
 		s.User.MinerLevel,
@@ -187,5 +187,5 @@ func (u *Users) PromotionCaseCommand(s *model.Situation) error {
 		return err
 	}
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }

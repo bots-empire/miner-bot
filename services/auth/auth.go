@@ -75,7 +75,7 @@ func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) er
 	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 INSERT INTO users
-	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
 		user.ID,
 		user.Balance,
 		user.BalanceHash,
@@ -89,7 +89,8 @@ INSERT INTO users
 		user.Language,
 		user.RegisterTime,
 		user.MinWithdrawal,
-		user.FirstWithdrawal)
+		user.FirstWithdrawal,
+		user.Status)
 	if err != nil {
 		return errors.Wrap(err, "query failed")
 	}
@@ -149,6 +150,7 @@ func createSimpleUser(lang string, message *tgbotapi.Message) *model.User {
 		ID:            message.From.ID,
 		Language:      lang,
 		AdvertChannel: rand.Intn(3) + 1,
+		Status:        "active",
 	}
 }
 
@@ -190,7 +192,8 @@ func (a *Auth) ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 			&user.Language,
 			&user.RegisterTime,
 			&user.MinWithdrawal,
-			&user.FirstWithdrawal); err != nil {
+			&user.FirstWithdrawal,
+			&user.Status); err != nil {
 			a.msgs.SendNotificationToDeveloper(errors.Wrap(err, "failed to scan row").Error(), false)
 		}
 

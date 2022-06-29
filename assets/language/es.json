@@ -19,7 +19,7 @@
   "change_buy_currency_text": "Ingrese la cantidad de {{currency}} que desea intercambiar con BTC \uD83D\uDC47\n\uD83E\uDE99 <b>Su saldo:</b> %.8f BTC\n\uD83D\uDCB6 <b>Max disponible:</b> %d {{currency}}\n\n\uD83D\uDD04 <b>Tipo de cambio:</b> 1 {{currency}} = %.8f BTC",
   "successful_exchange_btc_to_currency": "Canjeado con éxito %d {{currency}}\nLa moneda se acredita a su saldo\n\n\uD83D\uDCB6 <b>Saldo {{currency}}:</b> %d",
   "invalid_amount_to_change_btc": "Data entered incorrectly\nSpecify a positive integer value that you want to change \uD83D\uDC47\n\n<b>Exchange rate:</b> 1 {{currency}} = %.8f BTC",
-  "reached_max_amount_per_day": "✅ Hai completato %d dei %d compiti possibili\nNuove missioni arriveranno tra 24 ore\nMentre non ci sono posti di lavoro, puoi guadagnare {{currency}}. extra in questo canale ⬇️",
+  "reached_max_amount_per_day": "✅ Ha completado %d de %d tareas posibles.\nNuevas misiones aparecerán después de 24 horas.\nMientras no haya trabajo, puedes ganar {{currency}}. extra en este canal ⬇️",
   "upgrade_miner_lvl_text": "\uD83D\uDCF6 <b>Nivel minero:</b> %d\n\uD83C\uDD99 El costo para pasar al siguiente nivel es de %d hashes",
   "upgrade_miner_lvl_button": "⬆️ Aggiornamento",
   "successful_upgrade_miner": "El nivel de minero se ha aumentado con éxito ✅\nNivel de minero actual: %d\nGanancias por clic: %d",

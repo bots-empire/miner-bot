@@ -12,13 +12,25 @@ import (
 
 func (a *Admin) StartMailingCommand(s *model.Situation) error {
 	channel, _ := strconv.Atoi(strings.Split(s.CallbackQuery.Data, "?")[1])
-	go a.mailing.StartMailing(s.BotLang, s.User.ID, channel)
+
+	err := a.mailing.StartMailing(channelsFromNum(channel))
+	if err != nil {
+		return err
+	}
 
 	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "mailing_successful")
 	if channel == model.GlobalMailing {
 		return a.AdvertisementMenuCommand(s)
 	}
 	return a.resendAdvertisementMenuLevel(s.BotLang, s.User.ID, channel)
+}
+
+func channelsFromNum(channel int) []int {
+	if channel == 4 {
+		return []int{1, 2, 3}
+	}
+
+	return []int{channel}
 }
 
 func (a *Admin) sendMailingMenu(botLang string, userID int64, channel string) error {

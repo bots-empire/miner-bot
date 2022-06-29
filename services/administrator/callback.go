@@ -183,7 +183,7 @@ func (a *Admin) AdvertisementMenuCommand(s *model.Situation) error {
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_advert_chan_1", "admin/change_advert_chan?1")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_advert_chan_2", "admin/change_advert_chan?2")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_advert_chan_3", "admin/change_advert_chan?3")),
-		msgs.NewIlRow(msgs.NewIlAdminButton("global_advertisement", "admin/change_advert_chan?"+strconv.Itoa(model.MainAdvert))),
+		//msgs.NewIlRow(msgs.NewIlAdminButton("global_advertisement", "admin/change_advert_chan?"+strconv.Itoa(model.MainAdvert))),
 		msgs.NewIlRow(msgs.NewIlAdminButton("distribute_button_general", "admin/mailing_menu?"+strconv.Itoa(model.GlobalMailing))),
 		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_main_menu", "admin/send_menu")),
 	).Build(a.bot.AdminLibrary[lang])
@@ -481,7 +481,7 @@ func (a *Admin) StatisticCommand(s *model.Situation) error {
 	allCount := a.countAllUsers()
 	referrals := a.countReferrals(s.BotLang, count)
 	//lastDayUsers := countUserFromLastDay(s.BotLang)
-	blocked := countBlockedUsers(s.BotLang)
+	blocked := a.countBlockedUsers(s.BotLang)
 	subscribers := a.countSubscribers(s.BotLang)
 	text := a.adminFormatText(lang, "statistic_text",
 		allCount, count, referrals, blocked, subscribers, count-blocked)

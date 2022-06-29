@@ -19,6 +19,10 @@ func (h *AdminMessagesHandlers) GetHandler(command string) model.Handler {
 }
 
 func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
+	//Delete Admin command
+	h.OnCommand("/delete_admin", adminSrv.RemoveAdminCommand)
+
+	//Change Advertisement parameters command
 	h.OnCommand("/make_money", adminSrv.UpdateParameterCommand)
 	h.OnCommand("/change_text_url", adminSrv.SetNewTextUrlCommand)
 	h.OnCommand("/set_count", adminSrv.ChangeMinerCountCommand)
@@ -28,6 +32,37 @@ func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
 
 func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
+}
+
+func (a *Admin) RemoveAdminCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
+	adminId, err := strconv.ParseInt(s.Message.Text, 10, 64)
+	if err != nil {
+		text := a.bot.AdminText(lang, "incorrect_admin_id_text")
+		return a.msgs.NewParseMessage(s.User.ID, text)
+	}
+
+	if !checkAdminIDInTheList(adminId) {
+		text := a.bot.AdminText(lang, "incorrect_admin_id_text")
+		return a.msgs.NewParseMessage(s.User.ID, text)
+
+	}
+
+	delete(model.AdminSettings.AdminID, adminId)
+	model.SaveAdminSettings()
+	if err := a.setAdminBackButton(s.User.ID, "admin_removed_status"); err != nil {
+		return err
+	}
+	db.DeleteOldAdminMsg(s.BotLang, s.User.ID)
+
+	s.Command = "admin/send_admin_list"
+	s.CallbackQuery = &tgbotapi.CallbackQuery{Data: "admin/send_admin_list"}
+	return a.AdminListCommand(s)
+}
+
+func checkAdminIDInTheList(adminID int64) bool {
+	_, inMap := model.AdminSettings.AdminID[adminID]
+	return inMap
 }
 
 func (a *Admin) UpdateParameterCommand(s *model.Situation) error {

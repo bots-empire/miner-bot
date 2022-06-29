@@ -55,7 +55,7 @@ func (a *Auth) reachedMaxAmountPerDay(s *model.Situation) error {
 		model.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay)
 
 	markUp := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", model.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertisement_button_text", model.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel))),
 	).Build(a.bot.Language[s.User.Language])
 
 	return a.msgs.NewParseMarkUpMessage(s.User.ID, &markUp, text)
@@ -185,7 +185,7 @@ func (a *Auth) WithdrawMoneyFromBalance(s *model.Situation, amount string) error
 	amountInt, err := strconv.Atoi(amount)
 	if err != nil {
 		msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "incorrect_amount"))
-		return a.msgs.SendMsgToUser(msg)
+		return a.msgs.SendMsgToUser(msg, s.User.ID)
 	}
 
 	if amountInt < model.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount {
@@ -194,12 +194,12 @@ func (a *Auth) WithdrawMoneyFromBalance(s *model.Situation, amount string) error
 
 	if s.User.Balance < amountInt {
 		msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "lack_of_funds"))
-		return a.msgs.SendMsgToUser(msg)
+		return a.msgs.SendMsgToUser(msg, s.User.ID)
 	}
 
 	if s.User.MinerLevel < 3 {
 		msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "insufficient_miner_level"))
-		return a.msgs.SendMsgToUser(msg)
+		return a.msgs.SendMsgToUser(msg, s.User.ID)
 	}
 
 	return a.sendInvitationToSubs(s, amount)
@@ -217,11 +217,11 @@ func (a *Auth) sendInvitationToSubs(s *model.Situation, amount string) error {
 
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 	msg.ReplyMarkup = msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GetAdvertUrl(s.BotLang, 1))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel))),
 		msgs.NewIlRow(msgs.NewIlDataButton("im_subscribe_button", "/withdrawal_money?"+amount)),
 	).Build(a.bot.Language[s.User.Language])
 
-	return a.msgs.SendMsgToUser(msg)
+	return a.msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func (a *Auth) CheckSubscribeToWithdrawal(s *model.Situation, amount int) bool {
@@ -248,7 +248,7 @@ WHERE id = ?;`,
 	_ = rows.Close()
 
 	msg := tgbotapi.NewMessage(s.User.ID, a.bot.LangText(s.User.Language, "successfully_withdrawn"))
-	_ = a.msgs.SendMsgToUser(msg)
+	_ = a.msgs.SendMsgToUser(msg, s.User.ID)
 	return true
 }
 
@@ -286,13 +286,13 @@ func (a *Auth) CheckSubscribe(s *model.Situation, source string) bool {
 	model.CheckSubscribe.WithLabelValues(
 		a.bot.BotLink,
 		s.BotLang,
-		model.AdminSettings.GetAdvertUrl(s.BotLang, model.MainAdvert),
+		model.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel),
 		source,
 	).Inc()
 
 	member, err := model.Bots[s.BotLang].Bot.GetChatMember(tgbotapi.GetChatMemberConfig{
 		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
-			ChatID: model.AdminSettings.GetAdvertChannelID(s.BotLang, model.MainAdvert),
+			ChatID: model.AdminSettings.GetAdvertChannelID(s.BotLang, s.User.AdvertChannel),
 			UserID: s.User.ID,
 		},
 	})

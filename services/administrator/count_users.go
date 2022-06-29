@@ -72,13 +72,19 @@ func (a *Admin) countReferrals(botLang string, amountUsers int) string {
 	return refText
 }
 
-func countBlockedUsers(botLang string) int {
-	//var count int
-	//for _, value := range assets.AdminSettings.BlockedUsers {
-	//	count += value
-	//}
-	//return count
-	return model.AdminSettings.GlobalParameters[botLang].BlockedUsers
+func (a *Admin) countBlockedUsers(botLang string) int {
+	rows, err := model.Bots[botLang].DataBase.Query(`
+SELECT COUNT(DISTINCT id) FROM users WHERE status = 'deleted';`)
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper(err.Error(), false)
+		return 0
+	}
+
+	count, err := readRows(rows)
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper(err.Error(), false)
+	}
+	return count
 }
 
 func (a *Admin) countSubscribers(botLang string) int {

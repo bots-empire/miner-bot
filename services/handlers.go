@@ -202,7 +202,7 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 	if model.Bots[situation.BotLang].MaintenanceMode {
 		if situation.User.ID != godUserID {
 			msg := tgbotapi.NewMessage(situation.User.ID, "The bot is under maintenance, please try again later")
-			_ = u.Msgs.SendMsgToUser(msg)
+			_ = u.Msgs.SendMsgToUser(msg, situation.User.ID)
 			return
 		}
 	}
@@ -263,7 +263,7 @@ func (u *Users) checkMessage(situation *model.Situation, logger log.Logger, sort
 
 func (u *Users) smthWentWrong(chatID int64, lang string) {
 	msg := tgbotapi.NewMessage(chatID, u.bot.LangText(lang, "user_level_not_defined"))
-	_ = u.Msgs.SendMsgToUser(msg)
+	_ = u.Msgs.SendMsgToUser(msg, chatID)
 }
 
 func (u *Users) StartCommand(s *model.Situation) error {
@@ -280,7 +280,7 @@ func (u *Users) StartCommand(s *model.Situation) error {
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 	msg.ReplyMarkup = createMainMenu().Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func createMainMenu() msgs.MarkUp {
@@ -307,7 +307,7 @@ func (u *Users) MakeMoneyCommand(s *model.Situation) error {
 		msgs.NewRow(msgs.NewDataButton("back_to_main_menu_button")),
 	).Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func (u *Users) MakeClickCommand(s *model.Situation) error {
@@ -499,7 +499,7 @@ func (u *Users) SelectLangCommand(s *model.Situation) error {
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 	msg.ReplyMarkup = u.createLangMenu(u.bot.LanguageInBot)
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func (u *Users) createLangMenu(languages []string) tgbotapi.InlineKeyboardMarkup {
@@ -538,7 +538,7 @@ func (u *Users) PaypalReqCommand(s *model.Situation) error {
 		msgs.NewRow(msgs.NewDataButton("withdraw_cancel")),
 	).Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func (u *Users) CreditCardReqCommand(s *model.Situation) error {
@@ -549,7 +549,7 @@ func (u *Users) CreditCardReqCommand(s *model.Situation) error {
 		msgs.NewRow(msgs.NewDataButton("withdraw_cancel")),
 	).Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func (u *Users) WithdrawalMethodCommand(s *model.Situation) error {
@@ -560,7 +560,7 @@ func (u *Users) WithdrawalMethodCommand(s *model.Situation) error {
 		msgs.NewRow(msgs.NewDataButton("withdraw_cancel")),
 	).Build(u.bot.Language[s.User.Language])
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func (u *Users) ReqWithdrawalAmountCommand(s *model.Situation) error {
@@ -568,7 +568,7 @@ func (u *Users) ReqWithdrawalAmountCommand(s *model.Situation) error {
 
 	msg := tgbotapi.NewMessage(s.User.ID, u.bot.LangText(s.User.Language, "req_withdrawal_amount"))
 
-	return u.Msgs.SendMsgToUser(msg)
+	return u.Msgs.SendMsgToUser(msg, s.User.ID)
 }
 
 func (u *Users) WithdrawalAmountCommand(s *model.Situation) error {
@@ -581,7 +581,7 @@ func (u *Users) AdminLogOutCommand(s *model.Situation) error {
 	text := u.bot.AdminText(model.AdminLang(s.User.ID), "admin_log_out")
 	msg := tgbotapi.NewMessage(s.User.ID, text)
 
-	if err := u.Msgs.SendMsgToUser(msg); err != nil {
+	if err := u.Msgs.SendMsgToUser(msg, s.User.ID); err != nil {
 		return err
 	}
 
@@ -608,7 +608,7 @@ func (u *Users) MakeStatisticCommand(s *model.Situation) error {
 func (u *Users) MakeMoneyMsgCommand(s *model.Situation) error {
 	if s.Message.Voice == nil {
 		msg := tgbotapi.NewMessage(s.Message.Chat.ID, u.bot.LangText(s.User.Language, "voice_not_recognized"))
-		_ = u.Msgs.SendMsgToUser(msg)
+		_ = u.Msgs.SendMsgToUser(msg, s.User.ID)
 		return nil
 	}
 
@@ -627,7 +627,7 @@ func (u *Users) MoreMoneyCommand(s *model.Situation) error {
 		model.AdminSettings.GetParams(s.BotLang).BonusAmount)
 
 	markup := msgs.NewIlMarkUp(
-		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GetAdvertUrl(s.BotLang, model.MainAdvert))),
+		msgs.NewIlRow(msgs.NewIlURLButton("advertising_button", model.AdminSettings.GetAdvertUrl(s.BotLang, s.User.AdvertChannel))),
 		msgs.NewIlRow(msgs.NewIlDataButton("get_bonus_button", "/send_bonus_to_user")),
 	).Build(u.bot.Language[s.User.Language])
 

@@ -47,4 +47,20 @@ var (
 		},
 		[]string{"bot_link", "bot_name", "advert_link", "source"},
 	)
+
+	// mailing
+	MailToUser = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "total_mailing_users",
+			Help: "Total check subscribe",
+		},
+		[]string{"bot_name"},
+	)
+	BlockUser = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "total_block_users",
+			Help: "Total blocked users",
+		},
+		[]string{"bot_name"},
+	)
 )
