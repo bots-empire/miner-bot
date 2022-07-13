@@ -107,15 +107,25 @@ func validateSettings(settings *Admin, lang string) {
 		}
 	}
 
+	if settings.GlobalParameters[lang].Parameters.TopReward == nil {
+		settings.GlobalParameters[lang].Parameters.TopReward = []int{10, 10, 10}
+	}
+
 	if settings.GlobalParameters[lang].AdvertisingChan == nil {
-		settings.GlobalParameters[lang].AdvertisingChan = &AdvertChannel{
-			Url: map[int]string{
-				0: "https://google.com",
-				1: "https://google.com",
-				2: "https://google.com",
-				5: "https://google.com"},
-			ChannelID: make(map[int]int64),
+		settings.GlobalParameters[lang].AdvertisingChan = &AdvertChannel{}
+	}
+
+	if settings.GlobalParameters[lang].AdvertisingChan.Url == nil {
+		settings.GlobalParameters[lang].AdvertisingChan.Url = map[int]string{
+			1: "https://google.com",
+			2: "https://google.com",
+			3: "https://google.com",
+			5: "https://google.com",
 		}
+	}
+
+	if settings.GlobalParameters[lang].AdvertisingChan.ChannelID == nil {
+		settings.GlobalParameters[lang].AdvertisingChan.ChannelID = make(map[int]int64)
 	}
 
 	if settings.GlobalParameters[lang].AdvertisingChoice == nil {

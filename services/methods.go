@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+
 	"github.com/Stepan1328/miner-bot/model"
 )
 
@@ -90,6 +91,9 @@ func (u *Users) GetTopFromUsers() ([]*model.Top, error) {
 	dataBase := u.bot.GetDataBase()
 
 	rows, err := dataBase.Query(`SELECT * FROM top;`)
+	if err != nil {
+		return nil, err
+	}
 
 	top, err := u.ReadRows(rows)
 	if err != nil {

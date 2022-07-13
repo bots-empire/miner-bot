@@ -2,9 +2,11 @@ package services
 
 import (
 	"fmt"
-	"github.com/roylee0704/gron"
 	"strings"
 	"time"
+
+	"github.com/roylee0704/gron"
+	"github.com/roylee0704/gron/xtime"
 
 	"github.com/Stepan1328/miner-bot/db"
 	"github.com/Stepan1328/miner-bot/log"
@@ -70,9 +72,9 @@ func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader, t *gron.Cron) {
-	//t.AddFunc(gron.Every(time.Second*5), u.TopListPlayers)
-	//t.Start()
+func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader, cron *gron.Cron) {
+	//start top handler
+	cron.AddFunc(gron.Every(1*xtime.Day).At("12:00"), u.TopListPlayers)
 
 	for update := range u.bot.Chanel {
 		localUpdate := update
