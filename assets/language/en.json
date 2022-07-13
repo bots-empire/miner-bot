@@ -6,6 +6,7 @@
   "main_withdrawal_of_money": "\uD83C\uDFE7 Withdrawals",
   "make_money_buy_currency": "\uD83C\uDFDB BTC exchange",
   "main_money_for_a_friend": "\uD83D\uDC65 Referral bonus",
+  "main_top_players" : "\uD83D\uDD1D Top players",
   "main_more_money": "\uD83D\uDCB8 More money",
   "make_money_click": "⛏  Click",
   "make_money_buy_btc": "\uD83C\uDFDB HASH exchange",
@@ -56,5 +57,11 @@
   "invitation_to_subscribe": "We checked your subscription",
   "user_dont_subscribe": "you are not subscribed to the channel",
   "invalid_link_err": "Error, link is invalid",
-  "select_lang_menu": "Please select a language"
+  "select_lang_menu": "Please select a language",
+  "top_players" : "\uD83D\uDCE3 <b>Today you are on %d place \uD83C\uDFC6</b>\n\n<b>\uD83C\uDF81 To receive a reward, you must be in the Top 3 players by balance</b> \uD83C\uDF81\n------------------\n<b>Top \uD83E\uDD47</b>\n<b>Need balance</b>: %d \uD83D\uDCB6\n<b>Reward</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD48</b>\n<b>Need balance</b>: %d \uD83D\uDCB6\n<b>Reward</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD49</b>\n<b>Need balance</b>: %d \uD83D\uDCB6\n<b>Reward</b>: %d \uD83D\uDCB6\n\n\n<b>Your balance</b>: %d \uD83D\uDCB6\nThe player above you on %d place has a balance of: %d \uD83D\uDCB6",
+  "top_3_players_main" : "\uD83C\uDF89 <b>Congratulations today you are \uD83D\uDD1D %d \uD83D\uDD1D player by balance</b>\n<b>Your balance</b>: %d \uD83D\uDCB6\n\n<b>your reward: %d \uD83D\uDCB6</b>\n\n------------------\n<b>Top \uD83E\uDD47</b>\n<b>Reward</b>: %d\uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD48</b>\n<b>Reward</b>: %d \uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD49</b>\n<b>Reward</b>: %d \uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6\n\n You can claim your reward in the evening mailing top",
+  "top_3_players" : "\uD83C\uDF89 <b>Congratulations today you are \uD83D\uDD1D %d \uD83D\uDD1D player by balance</b>\n<b>Your balance</b>: %d \uD83D\uDCB6\n\n<b>your reward: %d \uD83D\uDCB6</b>\n\n------------------\n<b>Top \uD83E\uDD47</b>\n<b>Reward</b>: %d\uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD48</b>\n<b>Reward</b>: %d \uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD49</b>\n<b>Reward</b>: %d \uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6",
+  "top_3_players_reward_taken" : "\uD83C\uDF89 <b>Congratulations you are \uD83D\uDD1D %d \uD83D\uDD1D player by balance</b>\n<b>Your balance</b>: %d \uD83D\uDCB6\n\n<b>Today reward already taken comeback tomorrow ✅</b>\n\n------------------\n<b>Top \uD83E\uDD47</b>\n<b>Reward</b>: %d\uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD48</b>\n<b>Reward</b>: %d \uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD49</b>\n<b>Reward</b>: %d \uD83D\uDCB6\n<b>Need balance</b>: %d \uD83D\uDCB6",
+  "got_reward" : "You received reward! ✅",
+  "get_reward" : "\uD83C\uDF81 Click to take reward! \uD83C\uDF81"
 }

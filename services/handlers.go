@@ -54,7 +54,7 @@ func (h *MessagesHandlers) Init(userSrv *Users, adminSrv *administrator.Admin) {
 	h.OnCommand("/main_money_for_a_friend", userSrv.MoneyForAFriendCommand)
 	h.OnCommand("/main_more_money", userSrv.MoreMoneyCommand)
 	h.OnCommand("/main_statistic", userSrv.MakeStatisticCommand)
-	h.OnCommand("/main_top_players", userSrv.TopListPlayerFromMainCommand)
+	h.OnCommand("/main_top_players", userSrv.TopListPlayerCommand)
 
 	// Spend money command
 	h.OnCommand("/main_withdrawal_of_money", userSrv.SpendMoneyWithdrawalCommand)

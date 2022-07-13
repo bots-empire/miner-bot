@@ -6,6 +6,7 @@
   "main_withdrawal_of_money": "\uD83C\uDFE7 Para çekme",
   "make_money_buy_currency": "\uD83C\uDFDB BTC değişimi",
   "main_money_for_a_friend": "\uD83D\uDC65 Arkadaş için para",
+  "main_top_players" : "\uD83D\uDD1D En iyi oyuncular",
   "main_more_money": "\uD83D\uDCB8 Daha fazla para",
   "make_money_click": "⛏ Tıklayın",
   "make_money_buy_btc": "\uD83C\uDFDB HASH değişimi",
@@ -57,5 +58,11 @@
   "invitation_to_subscribe": "We checked your subscription",
   "user_dont_subscribe": "kanal aboneliği yok",
   "invalid_link_err": "Error, link is invalid",
-  "select_lang_menu": "Seleccione por favor una lengua"
+  "select_lang_menu": "Seleccione por favor una lengua",
+  "top_players" : "\uD83D\uDCE3 <b>Bugün %d yerdesiniz \uD83C\uDFC6</b>\n\n<b>\uD83C\uDF81 Bir ödül almak için İlk 3'te olmalısınız dengeye göre oyuncular</b> \uD83C\uDF81\n----------------\n<b>En İyi \uD83E\uDD47</b>\n<b> Bakiye gerekiyor</b>: %d \uD83D\uDCB6\n<b>Ödül</b>: %d \uD83D\uDCB6\n-------------------- \n<b>Üst \uD83E\uDD48</b>\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6\n<b>Ödül</b>: %d \uD83D\uDCB6\n----------------\n<b>Üst \uD83E\uDD49</b>\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6\n<b>Ödül</b>: %d \uD83D\uDCB6\n\n\n<b>Bakiyeniz</b>: %d \uD83D\uDCB6\n%d yerde sizden üstte olan oyuncunun bir bakiye: %d \uD83D\uDCB6",
+  "top_3_players_main" : "\uD83C\uDF89 <b>Tebrikler bugün \uD83D\uDD1D %d \uD83D\uDD1D oyuncususunuz</b>\n<b>Bakiyeniz</b>: %d \uD83D\uDCB6\n\n<b>ödünüz: %d \uD83D\uDCB6</b>\n\n------------------\n<b>En iyi \uD83E\uDD47</b>\n<b>Ödül</b>: %d\uD83D\uDCB6\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6\n------ ------------\n<b>En iyi \uD83E\uDD48</b>\n<b>Ödül</b>: %d \uD83D\uDCB6\n<b>Bakiye gerekiyor </b>: %d \uD83D\uDCB6\n----------------\n<b>En İyi \uD83E\uDD49</b>\n<b> Ödül</b>: %d \uD83D\uDCB6\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6\n\n Ödülünüzü akşam posta yoluyla talep edebilirsiniz",
+  "top_3_players" : "\uD83C\uDF89 <b>Tebrikler bugün \uD83D\uDD1D %d \uD83D\uDD1D oyuncususunuz</b>\n<b>Bakiyeniz</b>: %d \uD83D\uDCB6\n\n<b>ödünüz: %d \uD83D\uDCB6</b>\n\n------------------\n<b>En iyi \uD83E\uDD47</b>\n<b>Ödül</b>: %d\uD83D\uDCB6\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6\n------ ------------\n<b>En iyi \uD83E\uDD48</b>\n<b>Ödül</b>: %d \uD83D\uDCB6\n<b>Bakiye gerekiyor </b>: %d \uD83D\uDCB6\n----------------\n<b>En İyi \uD83E\uDD49</b>\n<b> Ödül</b>: %d \uD83D\uDCB6\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6",
+  "top_3_players_reward_taken" : "\uD83C\uDF89 <b>Tebrikler \uD83D\uDD1D %d \uD83D\uDD1D bakiyeye göre oyuncusunuz</b>\n<b>Bakiyeniz</b>: %d \uD83D\uDCB6 \n\n<b>Bugünün ödülü zaten yarın geri alındı ​​✅</b>\n\n----------------\n<b>En iyi \uD83E\uDD47 </b>\n<b>Ödül</b>: %d\uD83D\uDCB6\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6\n--------- ---------\n<b>En iyi \uD83E\uDD48</b>\n<b>Ödül</b>: %d \uD83D\uDCB6\n<b>Bakiye gerekiyor</b >: %d \uD83D\uDCB6\n----------------\n<b>En İyi \uD83E\uDD49</b>\n<b>Ödül</b> b>: %d \uD83D\uDCB6\n<b>Bakiye gerekiyor</b>: %d \uD83D\uDCB6",
+  "got_reward" : "Ödül aldınız! ✅",
+  "get_reward" : "\uD83C\uDF81 Ödülü almak için tıklayın! \uD83C\uDF81"
 }

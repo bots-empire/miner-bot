@@ -6,6 +6,7 @@
   "main_withdrawal_of_money": "\uD83C\uDFE7 Retirar dinero",
   "make_money_buy_currency": "\uD83C\uDFDB Intercambio de BTC",
   "main_money_for_a_friend": "\uD83D\uDC65 Dinero para amigo",
+  "main_top_players": "\uD83D\uDD1D Mejores jugadores",
   "main_more_money": "\uD83D\uDCB8 Más dinero",
   "make_money_click": "⛏ Haga clic",
   "make_money_buy_btc": "\uD83C\uDFDB Intercambio de HASH",
@@ -57,5 +58,11 @@
   "invitation_to_subscribe": "We checked your subscription",
   "user_dont_subscribe": "no estás suscrito al canal",
   "invalid_link_err": "Error, link is invalid",
-  "select_lang_menu": "Seleccione por favor una lengua"
+  "select_lang_menu": "Seleccione por favor una lengua",
+  "top_players" : "\uD83D\uDCE3 <b>Hoy estás en %d lugar \uD83C\uDFC6</b>\n\n<b>\uD83C\uDF81 Para recibir una recompensa, debes estar entre los 3 primeros jugadores por saldo</b> \uD83C\uDF81\n------------------\n<b>Top \uD83E\uDD47</b>\n<b> Necesita saldo</b>: %d \uD83D\uDCB6\n<b>Recompensa</b>: %d \uD83D\uDCB6\n------------------ \n<b>Principal \uD83E\uDD48</b>\n<b>Necesita saldo</b>: %d \uD83D\uDCB6\n<b>Recompensa</b>: %d \uD83D\uDCB6\n------------------\n<b>Superior \uD83E\uDD49</b>\n<b>Necesita equilibrio</b>: %d \uD83D\uDCB6\n<b>Recompensa</b>: %d \uD83D\uDCB6\n\n\n<b>Tu saldo</b>: %d \uD83D\uDCB6\nEl jugador que está arriba de ti en %d lugar tiene un saldo de: %d \uD83D\uDCB6",
+  "top_3_players_main" : "\uD83C\uDF89 <b>Felicitaciones hoy eres \uD83D\uDD1D %d \uD83D\uDD1D jugador por saldo</b>\n<b>Tu saldo</b>: %d \uD83D\uDCB6\n\n<b>tu recompensa: %d \uD83D\uDCB6</b>\n\n------------------\n<b>Top \uD83E\uDD47</b>\n<b>Recompensa</b>: %d\uD83D\uDCB6\n<b>Necesita saldo</b>: %d \uD83D\uDCB6\n------ ------------\n<b>Top \uD83E\uDD48</b>\n<b>Recompensa</b>: %d \uD83D\uDCB6\n<b>Necesita saldo </b>: %d \uD83D\uDCB6\n------------------\n<b>Arriba \uD83E\uDD49</b>\n<b> Recompensa</b>: %d \uD83D\uDCB6\n<b>Necesita saldo</b>: %d \uD83D\uDCB6\n\n Puede reclamar su recompensa en el correo de la tarde top",
+  "top_3_players" : "\uD83C\uDF89 <b>Felicitaciones hoy eres \uD83D\uDD1D %d \uD83D\uDD1D jugador por saldo</b>\n<b>Tu saldo</b>: %d \uD83D\uDCB6\n\n<b>tu recompensa: %d \uD83D\uDCB6</b>\n\n------------------\n<b>Top \uD83E\uDD47</b>\n<b>Recompensa</b>: %d\uD83D\uDCB6\n<b>Necesita saldo</b>: %d \uD83D\uDCB6\n------ ------------\n<b>Top \uD83E\uDD48</b>\n<b>Recompensa</b>: %d \uD83D\uDCB6\n<b>Necesita saldo </b>: %d \uD83D\uDCB6\n------------------\n<b>Arriba \uD83E\uDD49</b>\n<b> Recompensa</b>: %d \uD83D\uDCB6\n<b>Necesita saldo</b>: %d \uD83D\uDCB6",
+  "top_3_players_reward_taken": "\uD83C\uDF89 <b>Felicitaciones, eres \uD83D\uDD1D %d \uD83D\uDD1D jugador por saldo</b>\n<b>Tu saldo</b>: %d \uD83D\uDCB6 \n\n<b>La recompensa de hoy ya ha sido recuperada mañana ✅</b>\n\n------------------\n<b>Top \uD83E\uDD47 </b>\n<b>Recompensa</b>: %d\uD83D\uDCB6\n<b>Necesita saldo</b>: %d \uD83D\uDCB6\n--------- ---------\n<b>Principal \uD83E\uDD48</b>\n<b>Recompensa</b>: %d \uD83D\uDCB6\n<b>Necesita saldo</b >: %d \uD83D\uDCB6\n------------------\n<b>Top \uD83E\uDD49</b>\n<b>Recompensa</ b>: %d \uD83D\uDCB6\n<b>Necesita saldo</b>: %d \uD83D\uDCB6",
+  "got_reward": "¡Recibiste una recompensa! ✅",
+  "get_reward": "\uD83C\uDF81 ¡Haz clic para recibir la recompensa! \uD83C\uDF81"
 }

@@ -6,6 +6,7 @@
   "main_withdrawal_of_money": "\uD83C\uDFE7 Levantamento de dinheiro",
   "make_money_buy_currency": "\uD83C\uDFDB Troca de BTC",
   "main_money_for_a_friend": "\uD83D\uDC65 Dinheiro para amigo",
+  "main_top_players" : "\uD83D\uDD1D Melhores jogadores",
   "main_more_money": "\uD83D\uDCB8 Mais dinheiro",
   "make_money_click": "⛏ Clique",
   "make_money_buy_btc": "\uD83C\uDFDB Câmbio de HASH",
@@ -57,5 +58,11 @@
   "invitation_to_subscribe": "We checked your subscription",
   "user_dont_subscribe": "no estás suscrito al canal",
   "invalid_link_err": "Error, link is invalid",
-  "select_lang_menu": "Seleccione por favor una lengua"
+  "select_lang_menu": "Seleccione por favor una lengua",
+  "top_players" : "\uD83D\uDCE3 <b>Hoje você está em %d lugar \uD83C\uDFC6</b>\n\n<b>\uD83C\uDF81 Para receber uma recompensa, você deve estar entre os 3 melhores jogadores por saldo</b> \uD83C\uDF81\n------------------\n<b>Principais \uD83E\uDD47</b>\n<b> Equilíbrio necessário</b>: %d \uD83D\uDCB6\n<b>Recompensa</b>: %d \uD83D\uDCB6\n------------------ \n<b>Principal \uD83E\uDD48</b>\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6\n<b>Recompensa</b>: %d \uD83D\uDCB6\n------------------\n<b>Principal \uD83E\uDD49</b>\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6\n<b>Recompensa</b>: %d \uD83D\uDCB6\n\n\n<b>Seu saldo</b>: %d \uD83D\uDCB6\nO jogador acima de você em %d lugar tem um saldo de: %d \uD83D\uDCB6",
+  "top_3_players_main" : "\uD83C\uDF89 <b>Parabéns hoje você é \uD83D\uDD1D %d \uD83D\uDD1D jogador por saldo</b>\n<b>Seu saldo</b>: %d \uD83D\uDCB6\n\n<b>sua recompensa: %d \uD83D\uDCB6</b>\n\n------------------\n<b>Principal \uD83E\uDD47</b>\n<b>Recompensa</b>: %d\uD83D\uDCB6\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6\n------ ------------\n<b>Principal \uD83E\uDD48</b>\n<b>Recompensa</b>: %d \uD83D\uDCB6\n<b>Precisa de saldo </b>: %d \uD83D\uDCB6\n------------------\n<b>Principal \uD83E\uDD49</b>\n<b> Recompensa</b>: %d \uD83D\uDCB6\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6\n\n Você pode reivindicar sua recompensa na mala direta da noite",
+  "top_3_players" : "\uD83C\uDF89 <b>Parabéns hoje você é \uD83D\uDD1D %d \uD83D\uDD1D jogador por saldo</b>\n<b>Seu saldo</b>: %d \uD83D\uDCB6\n\n<b>sua recompensa: %d \uD83D\uDCB6</b>\n\n------------------\n<b>Principal \uD83E\uDD47</b>\n<b>Recompensa</b>: %d\uD83D\uDCB6\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6\n------ ------------\n<b>Principal \uD83E\uDD48</b>\n<b>Recompensa</b>: %d \uD83D\uDCB6\n<b>Precisa de saldo </b>: %d \uD83D\uDCB6\n------------------\n<b>Principal \uD83E\uDD49</b>\n<b> Recompensa</b>: %d \uD83D\uDCB6\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6",
+  "top_3_players_reward_taken" : "\uD83C\uDF89 <b>Parabéns você é \uD83D\uDD1D %d \uD83D\uDD1D jogador por saldo</b>\n<b>Seu saldo</b>: %d \uD83D\uDCB6 \n\n<b>Recompensa de hoje já aceita retorno amanhã ✅</b>\n\n------------------\n<b>Principal \uD83E\uDD47 </b>\n<b>Recompensa</b>: %d\uD83D\uDCB6\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6\n----- ---------\n<b>Principal \uD83E\uDD48</b>\n<b>Recompensa</b>: %d \uD83D\uDCB6\n<b>Precisa de equilíbrio</b> >: %d \uD83D\uDCB6\n------------------\n<b>Principal \uD83E\uDD49</b>\n<b>Recompensa</b> b>: %d \uD83D\uDCB6\n<b>Precisa de saldo</b>: %d \uD83D\uDCB6",
+  "got_reward" : "Você recebeu recompensa! ✅",
+  "get_reward" : "\uD83C\uDF81 Clique para receber a recompensa! \uD83C\uDF81"
 }
