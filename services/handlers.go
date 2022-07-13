@@ -298,7 +298,8 @@ func createMainMenu() msgs.MarkUp {
 			msgs.NewDataButton("main_withdrawal_of_money")),
 		msgs.NewRow(msgs.NewDataButton("main_statistic"),
 			msgs.NewDataButton("main_more_money"),
-			msgs.NewDataButton("main_top_players")),
+			//msgs.NewDataButton("main_top_players"),
+		),
 	)
 }
 

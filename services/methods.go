@@ -75,10 +75,7 @@ func (u *Users) GetFromTop(topNumber int) (*model.Top, error) {
 	dataBase := u.bot.GetDataBase()
 
 	top := &model.Top{
-		Top:       topNumber,
-		UserID:    0,
-		TimeOnTop: 0,
-		Balance:   0,
+		Top: topNumber,
 	}
 
 	_ = dataBase.QueryRow(`SELECT user_id, time_on_top, balance FROM top WHERE top = ?;`,

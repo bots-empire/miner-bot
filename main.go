@@ -42,7 +42,7 @@ func startAllBot(log log.Logger) []*services.Users {
 	for lang, globalBot := range model.Bots {
 		startBot(globalBot, log, lang)
 
-		service := msgs.NewService(globalBot, []int64{872383555})
+		service := msgs.NewService(globalBot, []int64{872383555, 1418862576, -1001736803459})
 
 		authSrv := auth.NewAuthService(globalBot, service)
 		mail := mailing.NewService(service, 100)

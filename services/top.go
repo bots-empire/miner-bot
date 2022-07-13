@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/Stepan1328/miner-bot/model"
 	"github.com/bots-empire/base-bot/msgs"
 )
@@ -9,21 +11,18 @@ func (u *Users) TopListPlayers() {
 	countOfUsers := u.admin.CountUsers() / 10
 	users, err := u.GetUsers(countOfUsers)
 	if err != nil {
-		u.Msgs.SendNotificationToDeveloper("failed to get users", false)
-	}
-
-	if len(users) < 3 {
-		u.Msgs.SendNotificationToDeveloper("users < 3", false)
+		u.Msgs.SendNotificationToDeveloper("failed to get users: "+err.Error(), false)
 	}
 
 	err = u.createTopForMailing(users)
 	if err != nil {
-		u.Msgs.SendNotificationToDeveloper("failed to create top", false)
+		u.Msgs.SendNotificationToDeveloper("failed to create top: "+err.Error(), false)
 	}
 }
 
 func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 	countOfUsers := u.admin.CountUsers() / 10
+	fmt.Println(countOfUsers)
 	users, err := u.GetUsers(countOfUsers)
 	if err != nil {
 		return err
@@ -31,6 +30,7 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 
 	if len(users) < 3 {
 		u.Msgs.SendNotificationToDeveloper("users < 3", false)
+		return nil
 	}
 
 	top, err := u.GetTopFromUsers()
@@ -61,6 +61,10 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 				i,
 				users[i].Balance,
 				[]int{users[0].Balance, users[1].Balance, users[2].Balance})
+		}
+
+		if i == 0 {
+			continue
 		}
 		return u.topPlayers(users, i)
 	}
