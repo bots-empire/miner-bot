@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/roylee0704/gron"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -19,6 +20,7 @@ import (
 )
 
 func main() {
+	t := gron.New()
 	rand.Seed(time.Now().Unix())
 
 	logger := log.NewDefaultLogger().Prefix("Miner Bot")
@@ -31,7 +33,7 @@ func main() {
 	srvs := startAllBot(logger)
 	model.UploadUpdateStatistic()
 
-	startHandlers(srvs, logger)
+	startHandlers(srvs, logger, t)
 }
 
 func startAllBot(log log.Logger) []*services.Users {
@@ -40,7 +42,7 @@ func startAllBot(log log.Logger) []*services.Users {
 	for lang, globalBot := range model.Bots {
 		startBot(globalBot, log, lang)
 
-		service := msgs.NewService(globalBot, []int64{872383555, 1418862576, -1001736803459})
+		service := msgs.NewService(globalBot, []int64{872383555})
 
 		authSrv := auth.NewAuthService(globalBot, service)
 		mail := mailing.NewService(service, 100)
@@ -87,14 +89,14 @@ func startPrometheusHandler(logger log.Logger) {
 	}
 }
 
-func startHandlers(srvs []*services.Users, logger log.Logger) {
+func startHandlers(srvs []*services.Users, logger log.Logger, t *gron.Cron) {
 	wg := new(sync.WaitGroup)
 
 	for _, service := range srvs {
 		wg.Add(1)
 		go func(handler *services.Users, wg *sync.WaitGroup) {
 			defer wg.Done()
-			handler.ActionsWithUpdates(logger, utils.NewSpreader(time.Minute))
+			handler.ActionsWithUpdates(logger, utils.NewSpreader(time.Minute), t)
 		}(service, wg)
 
 		service.Msgs.SendNotificationToDeveloper("Bot are restart", false)
