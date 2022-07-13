@@ -75,7 +75,7 @@ func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader, cron *gron.Cron) {
 	//start top handler
 	cron.AddFunc(gron.Every(1*xtime.Day).At("12:00"), u.TopListPlayers)
-	cron.AddFunc(gron.Every(1*xtime.Day).At("00:00"), u.sendTodayUpdateMsg)
+	cron.AddFunc(gron.Every(1*xtime.Day).At("21:00"), u.sendTodayUpdateMsg)
 
 	for update := range u.bot.Chanel {
 		localUpdate := update
