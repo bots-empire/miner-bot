@@ -54,6 +54,8 @@ type Params struct {
 	ExchangeBTCToCurrency float64 `json:"exchange_btc_to_currency"` // 0.00000001 * ExchangeBTCToCurrency BTC = 1 USD/EUR
 
 	Currency string `json:"currency"`
+
+	TopReward []int `json:"top_reward"`
 }
 
 type AdvertChannel struct {
@@ -101,6 +103,7 @@ func validateSettings(settings *Admin, lang string) {
 			UpgradeMinerCost:      []int{0},
 			ExchangeHashToBTC:     1,
 			ExchangeBTCToCurrency: oneSatoshi,
+			TopReward:             []int{10, 10, 10},
 		}
 	}
 
@@ -192,6 +195,10 @@ func (a *Admin) UpdateAdvertChan(lang string, newChan *AdvertChannel) {
 
 func (a *Admin) UpdateBlockedUsers(lang string, value int) {
 	a.GlobalParameters[lang].BlockedUsers = value
+}
+
+func (a *Admin) UpdateTopRewardSetting(lang string, i int, value int) {
+	a.GlobalParameters[lang].Parameters.TopReward[i] = value
 }
 
 func (a *Admin) GetParams(lang string) *Params {

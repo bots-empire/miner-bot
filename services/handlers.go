@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/roylee0704/gron"
 	"strings"
 	"time"
 
@@ -51,6 +52,7 @@ func (h *MessagesHandlers) Init(userSrv *Users, adminSrv *administrator.Admin) {
 	h.OnCommand("/main_money_for_a_friend", userSrv.MoneyForAFriendCommand)
 	h.OnCommand("/main_more_money", userSrv.MoreMoneyCommand)
 	h.OnCommand("/main_statistic", userSrv.MakeStatisticCommand)
+	h.OnCommand("/main_top_players", userSrv.TopListPlayerFromMainCommand)
 
 	// Spend money command
 	h.OnCommand("/main_withdrawal_of_money", userSrv.SpendMoneyWithdrawalCommand)
@@ -68,7 +70,10 @@ func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 	h.Handlers[command] = handler
 }
 
-func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader) {
+func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader, t *gron.Cron) {
+	//t.AddFunc(gron.Every(time.Second*5), u.TopListPlayers)
+	//t.Start()
+
 	for update := range u.bot.Chanel {
 		localUpdate := update
 
@@ -291,7 +296,8 @@ func createMainMenu() msgs.MarkUp {
 		msgs.NewRow(msgs.NewDataButton("make_money_buy_currency"),
 			msgs.NewDataButton("main_withdrawal_of_money")),
 		msgs.NewRow(msgs.NewDataButton("main_statistic"),
-			msgs.NewDataButton("main_more_money")),
+			msgs.NewDataButton("main_more_money"),
+			msgs.NewDataButton("main_top_players")),
 	)
 }
 

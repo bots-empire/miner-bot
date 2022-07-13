@@ -28,6 +28,7 @@
   "main_statistic": "/main_statistic",
   "back_to_main_menu_button": "/start",
   "/make_money": "/make_money",
+  "main_top_players": "/main_top_players",
 
   "back_to_admin_settings": "/admin_setting",
   "back_to_make_money_setting": "/make_money",

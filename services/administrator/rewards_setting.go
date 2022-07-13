@@ -53,6 +53,7 @@ func (a *Admin) sendMakeMoneyMenu(botLang string, userID int64) (*tgbotapi.Inlin
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_max_of_click_pd_button", "admin/make_money?"+maxOfClickPDAmount)),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_miner_settings_button", "admin/miner_settings")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_exchange_rate_button", "admin/exchange_rate")),
+		msgs.NewIlRow(msgs.NewIlAdminButton("change_change_top_amount_button", "admin/change_top_amount_settings")),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_referral_amount_button", "admin/make_money?"+referralAmount)),
 		msgs.NewIlRow(msgs.NewIlAdminButton("change_currency_type_button", "admin/make_money?"+currencyType)),
 		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_main_menu", "admin/send_menu")),
@@ -363,4 +364,104 @@ func (a *Admin) ChangeBTCToCurrencyRateButton(s *model.Situation) error {
 func (a *Admin) NotClickableButton(s *model.Situation) error {
 	_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "not_clickable_button")
 	return nil
+}
+
+//func (a *Admin) TopRewardSetting(s *model.Situation) {
+//	for i := 0; i < 3; i++ {
+//		value := 60000
+//		model.AdminSettings.UpdateTopRewardSetting(a.bot.BotLang, i, value)
+//		value /= 2
+//	}
+//}
+
+func (a *Admin) SetTopAmountCommand(s *model.Situation) error {
+	lang := model.AdminLang(s.User.ID)
+	text := a.adminFormatText(lang, "change_top_settings_button")
+
+	top := db.RdbGetTopLevelSetting(s.BotLang, s.User.ID)
+	markUp := getTopSettingMenu(a.bot.AdminLibrary[lang], top+1, model.AdminSettings.GlobalParameters[s.BotLang].Parameters.TopReward[top])
+
+	msgID := db.RdbGetAdminMsgID(s.BotLang, s.User.ID)
+	if msgID == 0 {
+		id, err := a.msgs.NewIDParseMarkUpMessage(s.User.ID, markUp, text)
+		if err != nil {
+			return err
+		}
+
+		db.RdbSetAdminMsgID(s.BotLang, s.User.ID, id)
+		return nil
+	}
+
+	return a.msgs.NewEditMarkUpMessage(s.User.ID, msgID, markUp, text)
+}
+
+func getTopSettingMenu(texts map[string]string, top int, amount int) *tgbotapi.InlineKeyboardMarkup {
+	markUp := msgs.NewIlMarkUp(
+		msgs.NewIlRow(msgs.NewIlAdminButton("top_level_button", "admin/not_clickable")),
+		msgs.NewIlRow(
+			msgs.NewIlCustomButton("<<", "admin/change_top_level?dec"),
+			msgs.NewIlCustomButton(strconv.Itoa(top), "admin/not_clickable"),
+			msgs.NewIlCustomButton(">>", "admin/change_top_level?inc")),
+
+		msgs.NewIlRow(msgs.NewIlAdminButton("top_amount_button", "admin/not_clickable")),
+		msgs.NewIlRow(
+			msgs.NewIlCustomButton("-5", "admin/change_top_amount?dec&5"),
+			msgs.NewIlCustomButton("-1", "admin/change_top_amount?dec&1"),
+			msgs.NewIlCustomButton(strconv.Itoa(amount), "admin/not_clickable"),
+			msgs.NewIlCustomButton("+1", "admin/change_top_amount?inc&1"),
+			msgs.NewIlCustomButton("+5", "admin/change_top_amount?inc&5")),
+
+		msgs.NewIlRow(msgs.NewIlAdminButton("back_to_make_money_setting", "admin/make_money_setting")),
+	).Build(texts)
+
+	return &markUp
+}
+
+func (a *Admin) ChangeTopLevelCommand(s *model.Situation) error {
+	level := db.RdbGetTopLevelSetting(s.BotLang, s.User.ID)
+	operation := strings.Split(s.CallbackQuery.Data, "?")[1]
+
+	switch operation {
+	case "inc":
+		if level == 2 {
+			_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "already_max_level")
+			return nil
+		}
+		level++
+	case "dec":
+		if level == 0 {
+			_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "already_min_level")
+			return nil
+		}
+		level--
+	}
+
+	db.RdbSetTopLevelSetting(s.BotLang, s.User.ID, level)
+	return a.SetTopAmountCommand(s)
+}
+
+func (a *Admin) ChangeTopAmountButtonCommand(s *model.Situation) error {
+	level := db.RdbGetTopLevelSetting(s.BotLang, s.User.ID)
+
+	allParams := strings.Split(s.CallbackQuery.Data, "?")[1]
+	changeParams := strings.Split(allParams, "&")
+	operation := changeParams[0]
+
+	switch operation {
+	case "inc":
+		value, _ := strconv.Atoi(changeParams[1])
+		model.AdminSettings.GetParams(s.BotLang).TopReward[level] += value
+	case "dec":
+		value, _ := strconv.Atoi(changeParams[1])
+
+		if model.AdminSettings.GetParams(s.BotLang).TopReward[level]-value < 1 {
+			_ = a.msgs.SendAdminAnswerCallback(s.CallbackQuery, "already_min_value")
+			return nil
+		}
+
+		model.AdminSettings.GetParams(s.BotLang).TopReward[level] -= value
+	}
+
+	model.SaveAdminSettings()
+	return a.SetTopAmountCommand(s)
 }

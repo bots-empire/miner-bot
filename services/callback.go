@@ -32,6 +32,7 @@ func (h *CallBackHandlers) Init(userSrv *Users) {
 	h.OnCommand("/send_bonus_to_user", userSrv.GetBonusCommand)
 	h.OnCommand("/withdrawal_money", userSrv.RecheckSubscribeCommand)
 	h.OnCommand("/promotion_case", userSrv.PromotionCaseCommand)
+	h.OnCommand("/get_reward", userSrv.GetRewardCommand)
 }
 
 func (h *CallBackHandlers) OnCommand(command string, handler model.Handler) {

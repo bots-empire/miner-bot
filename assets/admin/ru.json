@@ -97,6 +97,7 @@
   "no_language_selected": "Выберите хотя бы один язык",
   "mailing_successful": "Реклама успешно отправлена",
   "need_positive_number": "Требуется положительное число",
+  "change_top_settings_button": "Награда за топ \uD83D\uDD1D\n\nВы можете изменить данные ⤵",
 
   "send_photo" : "Отправьте фото",
   "no_photo_found" : "<b>Вы не присылали фото</b>\nПришлите фото ⤵",
@@ -119,6 +120,9 @@
   "back_to_chan_menu" : "← Вернуться к выбору каналов",
   "distribute_button_general" : "Общая рассылка \uD83D\uDCE3",
   "global_advertisement" : "Главная реклама \uD83D\uDCB5",
+  "change_change_top_amount_button" : "Награда за топ \uD83D\uDD1D",
+  "top_level_button": "⬇️ Топ ⬇️",
+  "top_amount_button" : "⬇ Награда за топ ⬇",
 
   "amount": "Сумма за реферала",
   "confirm": "✅ Принять изменения ✅",

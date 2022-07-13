@@ -135,3 +135,25 @@ func RdbGetMinerLevelSetting(botLang string, userID int64) int {
 	level, _ := strconv.Atoi(result)
 	return level
 }
+
+func topLevelSettingToRdb(botLang string, userID int64) string {
+	return botLang + ":top_level_setting:" + strconv.FormatInt(userID, 10)
+}
+
+func RdbSetTopLevelSetting(botLang string, userID int64, level int) {
+	topLevel := topLevelSettingToRdb(botLang, userID)
+	_, err := model.Bots[botLang].Rdb.Set(topLevel, strconv.Itoa(level), 0).Result()
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func RdbGetTopLevelSetting(botLang string, userID int64) int {
+	topLevel := topLevelSettingToRdb(botLang, userID)
+	result, err := model.Bots[botLang].Rdb.Get(topLevel).Result()
+	if err != nil {
+		log.Println(err)
+	}
+	level, _ := strconv.Atoi(result)
+	return level
+}
