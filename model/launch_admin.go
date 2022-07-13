@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 )
 
@@ -16,7 +15,6 @@ const (
 
 	oneSatoshi    = 0.00000001
 	GlobalMailing = 4
-	MainAdvert    = 5
 )
 
 type Admin struct {
@@ -311,7 +309,6 @@ func remove(slice []int, s int) []int {
 type UpdateInfo struct {
 	Mu      *sync.Mutex
 	Counter int
-	Day     int
 }
 
 var UpdateStatistic *UpdateInfo
@@ -325,19 +322,12 @@ func UploadUpdateStatistic() {
 		return
 	}
 
-	data := strings.Split(strStatistic, "?")
-	if len(data) != 2 {
-		UpdateStatistic = info
-		return
-	}
-	info.Counter, _ = strconv.Atoi(data[0])
-	info.Day, _ = strconv.Atoi(data[1])
+	info.Counter, _ = strconv.Atoi(strStatistic)
 	UpdateStatistic = info
 }
 
 func SaveUpdateStatistic() {
-	strStatistic := strconv.Itoa(UpdateStatistic.Counter) + "?" + strconv.Itoa(UpdateStatistic.Day)
-	_, err := Bots["it"].Rdb.Set("update_statistic", strStatistic, 0).Result()
+	_, err := Bots["it"].Rdb.Set("update_statistic", strconv.Itoa(UpdateStatistic.Counter), 0).Result()
 	if err != nil {
 		log.Println(err)
 	}

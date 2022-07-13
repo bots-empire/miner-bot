@@ -75,6 +75,7 @@ func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader, cron *gron.Cron) {
 	//start top handler
 	cron.AddFunc(gron.Every(1*xtime.Day).At("12:00"), u.TopListPlayers)
+	cron.AddFunc(gron.Every(1*xtime.Day).At("00:00"), u.sendTodayUpdateMsg)
 
 	for update := range u.bot.Chanel {
 		localUpdate := update
@@ -137,10 +138,6 @@ func (u *Users) printNewUpdate(update *tgbotapi.Update, logger log.Logger) {
 	model.UpdateStatistic.Mu.Lock()
 	defer model.UpdateStatistic.Mu.Unlock()
 
-	if (time.Now().Unix())/86400 > int64(model.UpdateStatistic.Day) {
-		u.sendTodayUpdateMsg()
-	}
-
 	model.UpdateStatistic.Counter++
 	model.SaveUpdateStatistic()
 
@@ -169,11 +166,13 @@ func (u *Users) printNewUpdate(update *tgbotapi.Update, logger log.Logger) {
 }
 
 func (u *Users) sendTodayUpdateMsg() {
+	model.UpdateStatistic.Mu.Lock()
+	defer model.UpdateStatistic.Mu.Unlock()
+
 	text := fmt.Sprintf(updateCounterHeader, model.UpdateStatistic.Counter)
 	u.Msgs.SendNotificationToDeveloper(text, true)
 
 	model.UpdateStatistic.Counter = 0
-	model.UpdateStatistic.Day = int(time.Now().Unix()) / 86400
 }
 
 func createSituationFromMsg(botLang string, message *tgbotapi.Message, user *model.User) *model.Situation {
