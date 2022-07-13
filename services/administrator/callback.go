@@ -480,7 +480,7 @@ func (a *Admin) promptForInput(userID int64, key string, values ...interface{}) 
 func (a *Admin) StatisticCommand(s *model.Situation) error {
 	lang := model.AdminLang(s.User.ID)
 
-	count := a.countUsers()
+	count := a.CountUsers()
 	allCount := a.countAllUsers()
 	referrals := a.countReferrals(s.BotLang, count)
 	//lastDayUsers := countUserFromLastDay(s.BotLang)

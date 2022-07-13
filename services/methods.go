@@ -28,10 +28,10 @@ SELECT balance FROM users WHERE id = ?`, id).Scan(&balance)
 	return balance, nil
 }
 
-func (u *Users) GetUsers() ([]*model.User, error) {
+func (u *Users) GetUsers(limit int) ([]*model.User, error) {
 	dataBase := u.bot.GetDataBase()
 	rows, err := dataBase.Query(`
-SELECT id, balance FROM users ORDER BY balance DESC`)
+SELECT id, balance FROM users ORDER BY balance DESC LIMIT ?`, limit)
 	if err != nil {
 		return nil, err
 	}

@@ -1,13 +1,15 @@
 package services
 
 import (
+	"log"
+
 	"github.com/Stepan1328/miner-bot/model"
 	"github.com/bots-empire/base-bot/msgs"
-	"log"
 )
 
 func (u *Users) TopListPlayers() {
-	users, err := u.GetUsers()
+	countOfUsers := u.admin.CountUsers() / 10
+	users, err := u.GetUsers(countOfUsers)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -19,7 +21,8 @@ func (u *Users) TopListPlayers() {
 }
 
 func (u *Users) TopListPlayerFromMainCommand(s *model.Situation) error {
-	users, err := u.GetUsers()
+	countOfUsers := u.admin.CountUsers() / 10
+	users, err := u.GetUsers(countOfUsers)
 	if err != nil {
 		return err
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (a *Admin) countUsers() int {
+func (a *Admin) CountUsers() int {
 	rows, err := a.bot.GetDataBase().Query(`
 SELECT COUNT(*) FROM users;`)
 	if err != nil {
