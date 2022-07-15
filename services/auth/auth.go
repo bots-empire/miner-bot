@@ -68,14 +68,14 @@ func (a *Auth) SetStartLanguage(callback *tgbotapi.CallbackQuery) error {
 }
 
 func (a *Auth) addNewUser(user *model.User, botLang string, referralID int64) error {
-	user.MinerLevel = 1
-	user.RegisterTime = time.Now().Unix()
-	user.Language = botLang
+	if referralID == user.ID {
+		referralID = 0
+	}
 
 	dataBase := a.bot.GetDataBase()
 	rows, err := dataBase.Query(`
 INSERT INTO users
-	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
 		user.ID,
 		user.Balance,
 		user.BalanceHash,
@@ -84,7 +84,8 @@ INSERT INTO users
 		user.LastClick,
 		user.MinerLevel,
 		user.AdvertChannel,
-		user.ReferralCount,
+		user.FatherID,
+		user.AllReferrals,
 		user.TakeBonus,
 		user.Language,
 		user.RegisterTime,
@@ -96,23 +97,11 @@ INSERT INTO users
 	}
 	_ = rows.Close()
 
-	if referralID == user.ID || referralID == 0 {
+	if referralID == 0 {
 		return nil
 	}
 
-	baseUser, err := a.GetUser(referralID)
-	if err != nil {
-		return errors.Wrap(err, "get user")
-	}
-	baseUser.Balance += model.AdminSettings.GetParams(botLang).ReferralAmount
-	rows, err = dataBase.Query("UPDATE users SET balance = ?, referral_count = ? WHERE id = ?;",
-		baseUser.Balance, baseUser.ReferralCount+1, baseUser.ID)
-	if err != nil {
-		return err
-	}
-	_ = rows.Close()
-
-	return nil
+	return a.referralRewardSystem(botLang, referralID, 1)
 }
 
 func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
@@ -148,8 +137,10 @@ func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
 func createSimpleUser(lang string, message *tgbotapi.Message) *model.User {
 	return &model.User{
 		ID:            message.From.ID,
+		MinerLevel:    1,
 		Language:      lang,
 		AdvertChannel: rand.Intn(3) + 1,
+		RegisterTime:  time.Now().Unix(),
 		Status:        "active",
 	}
 }
@@ -186,8 +177,9 @@ func (a *Auth) ReadUsers(rows *sql.Rows) ([]*model.User, error) {
 			&user.MiningToday,
 			&user.LastClick,
 			&user.MinerLevel,
+			&user.FatherID,
+			&user.AllReferrals,
 			&user.AdvertChannel,
-			&user.ReferralCount,
 			&user.TakeBonus,
 			&user.Language,
 			&user.RegisterTime,

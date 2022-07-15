@@ -83,8 +83,22 @@ func (a *Admin) ChangeParameterCommand(s *model.Situation) error {
 		parameter = a.bot.AdminText(lang, "change_max_of_click_pd_button")
 		value = model.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay
 	case referralAmount:
-		parameter = a.bot.AdminText(lang, "change_referral_amount_button")
-		value = model.AdminSettings.GetParams(s.BotLang).ReferralAmount
+		db.RdbSetUser(s.BotLang, s.User.ID, "admin")
+
+		reward, err := RdbGetRewardGap(s.BotLang, s.User.ID)
+		if err != nil {
+			return err
+		}
+		if reward == nil {
+			reward = model.AdminSettings.GetParams(s.BotLang).ReferralReward.GetGapByIndex(1, 1)
+			err = RdbSetRewardGap(s.BotLang, s.User.ID, reward)
+			if err != nil {
+				return err
+			}
+		}
+
+		markUp, text := a.rewardsMarkUpAndText(s.User.ID, reward)
+		return a.sendMsgAdnAnswerCallback(s, markUp, text)
 	case currencyType:
 		parameter = a.bot.AdminText(lang, "change_currency_type_button")
 		value = model.AdminSettings.GetParams(s.BotLang).Currency

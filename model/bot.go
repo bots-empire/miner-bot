@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
+	"strconv"
 
 	"github.com/Stepan1328/miner-bot/cfg"
 	"github.com/go-redis/redis"
@@ -77,17 +77,27 @@ func UploadDataBase(dbLang string) *sql.DB {
 		log.Fatalf("Failed open database: %s\n", err.Error())
 	}
 
-	_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN status text NOT NULL;")
-	if err != nil && err.Error() != "Error 1060: Duplicate column name 'status'" {
-		log.Fatalln(err)
-	}
-
-	_, err = dataBase.Exec("UPDATE users SET status = 'active' WHERE status = '';")
+	dataBase, err = sql.Open(dbDriver, cfg.DBCfg.User+cfg.DBCfg.Password+"@/"+cfg.DBCfg.Names[dbLang]) //TODO: refactor
 	if err != nil {
+		log.Fatalf("Failed open database: %s\n", err.Error())
+	}
+
+	_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN father_id bigint NOT NULL AFTER miner_level;")
+	if err != nil && err.Error() != "Error 1060: Duplicate column name 'father_id'" {
 		log.Fatalln(err)
 	}
 
-	TakeAllUsers(dataBase)
+	_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN all_referrals text NOT NULL AFTER father_id;")
+	if err != nil && err.Error() != "Error 1060: Duplicate column name 'all_referrals'" {
+		log.Fatalln(err)
+	}
+
+	migrateReferralFriends(dataBase)
+
+	_, err = dataBase.Exec("ALTER TABLE users DROP COLUMN referral_count;")
+	if err != nil && err.Error() != "Error 1091: Can't DROP 'referral_count'; check that column/key exists" {
+		log.Fatalln(err)
+	}
 
 	err = dataBase.Ping()
 	if err != nil {
@@ -97,47 +107,79 @@ func UploadDataBase(dbLang string) *sql.DB {
 	return dataBase
 }
 
-func TakeAllUsers(dataBase *sql.DB) {
-	rows, err := dataBase.Query(`SELECT * FROM users WHERE advert_channel = 0;`)
-	if err != nil {
+func migrateReferralFriends(dataBase *sql.DB) {
+	rows, err := dataBase.Query(`SELECT * FROM users WHERE referral_count != 0;`)
+	if err != nil && err.Error() != "Error 1054: Unknown column 'referral_count' in 'where clause'" {
+		log.Fatalln(err)
 	}
 
 	if rows == nil {
 		return
 	}
 
-	users, err := ReadUser(rows)
+	users, err := readCustomUser(rows)
 	if err != nil {
+		log.Fatalln(err)
 	}
 
-	for i := range users {
-		dataBase.Exec(`UPDATE users SET advert_channel = ? WHERE id = ?;`, rand.Intn(3)+1, users[i].ID)
-	}
+	go func() {
+		for i, user := range users {
+			_, err = dataBase.Exec(`UPDATE users SET all_referrals = ? WHERE id = ?;`, strconv.Itoa(user.ReferralCount), user.ID)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			fmt.Println(user.ID, "    UPDATED NUMBER = ", i)
+		}
+	}()
 }
 
-func ReadUser(rows *sql.Rows) ([]*User, error) {
+type customUser struct {
+	ID              int64   `json:"id"`
+	Balance         int     `json:"balance"`
+	BalanceHash     int     `json:"balance_hash"`
+	BalanceBTC      float64 `json:"balance_btc"`
+	MiningToday     int     `json:"mining_today"`
+	LastClick       int64   `json:"last_click"`
+	MinerLevel      int8    `json:"miner_level"`
+	FatherID        int64   `json:"father_id"`
+	AllReferrals    string  `json:"all_referrals"` // 10/20/30/40
+	ReferralCount   int     `json:"referral_count"`
+	AdvertChannel   int     `json:"advert_channel"`
+	TakeBonus       bool    `json:"take_bonus"`
+	Language        string  `json:"language"`
+	RegisterTime    int64   `json:"register_time"`
+	MinWithdrawal   int     `json:"min_withdrawal"`
+	FirstWithdrawal bool    `json:"first_withdrawal"`
+	Status          string  `json:"status"`
+}
+
+func readCustomUser(rows *sql.Rows) ([]*customUser, error) {
 	defer rows.Close()
 
-	var users []*User
+	var users []*customUser
 
 	for rows.Next() {
-		user := &User{}
+		user := &customUser{}
 
-		if err := rows.Scan(&user.ID,
+		if err := rows.Scan(
+			&user.ID,
 			&user.Balance,
 			&user.BalanceHash,
 			&user.BalanceBTC,
 			&user.MiningToday,
 			&user.LastClick,
 			&user.MinerLevel,
-			&user.AdvertChannel,
+			&user.FatherID,
+			&user.AllReferrals,
 			&user.ReferralCount,
+			&user.AdvertChannel,
 			&user.TakeBonus,
 			&user.Language,
 			&user.RegisterTime,
 			&user.MinWithdrawal,
-			&user.FirstWithdrawal); err != nil {
-			//msgs.SendNotificationToDeveloper(errors.Wrap(err, "failed to scan row").Error())
+			&user.FirstWithdrawal,
+			&user.Status); err != nil {
+			log.Fatalln(err)
 		}
 
 		users = append(users, user)

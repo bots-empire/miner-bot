@@ -47,6 +47,14 @@ func (h *AdminCallbackHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/change_hash_to_btc_rate", adminSrv.ChangeHashToBTCRateButton)
 	h.OnCommand("/change_btc_to_currency_rate", adminSrv.ChangeBTCToCurrencyRateButton)
 	h.OnCommand("/not_clickable", adminSrv.NotClickableButton)
+	h.OnCommand("/change_rewards_gap", adminSrv.ChangeRewardsGapCommand)
+	h.OnCommand("/apply_rewards", adminSrv.ApplyRewardCommand)
+	h.OnCommand("/change_gap", adminSrv.ChangeGapCommand)
+	h.OnCommand("/change_level", adminSrv.ChangeLevelCommand)
+	h.OnCommand("/lvl_info", adminSrv.LevelInfoCommand)
+	h.OnCommand("/delete_gap", adminSrv.DeleteGapCommand)
+	h.OnCommand("/delete_level", adminSrv.DeleteLevelCommand)
+	h.OnCommand("/check_rewards_ranges", adminSrv.ViewLevelCommand)
 
 	//Mailing command
 	h.OnCommand("/advertisement", adminSrv.AdvertisementMenuCommand)

@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -466,7 +467,7 @@ func (u *Users) SendProfileCommand(s *model.Situation) error {
 		s.User.BalanceBTC,
 		s.User.BalanceHash,
 		s.User.MinerLevel,
-		s.User.ReferralCount)
+		getFirstLvlRef(s.User.AllReferrals))
 
 	if len(u.bot.LanguageInBot) > 1 {
 		ReplyMarkup := u.createLangMenu(u.bot.LanguageInBot)
@@ -474,6 +475,16 @@ func (u *Users) SendProfileCommand(s *model.Situation) error {
 	}
 
 	return u.Msgs.NewParseMessage(s.User.ID, text)
+}
+
+func getFirstLvlRef(rawLvls string) int {
+	refByLvl := strings.Split(rawLvls, "/")
+	if len(refByLvl) == 0 {
+		return 0
+	}
+
+	count, _ := strconv.Atoi(refByLvl[0])
+	return count
 }
 
 func (u *Users) MoneyForAFriendCommand(s *model.Situation) error {
@@ -487,10 +498,12 @@ func (u *Users) MoneyForAFriendCommand(s *model.Situation) error {
 		return err
 	}
 
+	countOfFirstLvl := getFirstLvlRef(s.User.AllReferrals)
+
 	text := u.bot.LangText(s.User.Language, "referral_text",
 		link,
-		model.AdminSettings.GetParams(s.BotLang).ReferralAmount,
-		s.User.ReferralCount)
+		model.AdminSettings.GetParams(s.BotLang).ReferralReward.GetReward(1, countOfFirstLvl),
+		countOfFirstLvl)
 
 	return u.Msgs.NewParseMessage(s.User.ID, text)
 }

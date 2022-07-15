@@ -28,6 +28,9 @@ func (h *AdminMessagesHandlers) Init(adminSrv *Admin) {
 	h.OnCommand("/set_count", adminSrv.ChangeMinerCountCommand)
 	h.OnCommand("/advertisement_setting", adminSrv.AdvertisementSettingCommand)
 	h.OnCommand("/get_new_source", adminSrv.GetNewSourceCommand)
+
+	//Make Money Setting command
+	h.OnCommand("/change_rewards_gap", adminSrv.UpdateRewardsGapCommand)
 }
 
 func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler) {
@@ -119,8 +122,6 @@ func (a *Admin) setNewIntParameter(s *model.Situation, partition string) error {
 		model.AdminSettings.GetParams(s.BotLang).MinWithdrawalAmount = newAmount
 	case maxOfClickPDAmount:
 		model.AdminSettings.GetParams(s.BotLang).MaxOfClickPerDay = newAmount
-	case referralAmount:
-		model.AdminSettings.GetParams(s.BotLang).ReferralAmount = newAmount
 	}
 
 	return nil

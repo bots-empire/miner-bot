@@ -16,6 +16,9 @@ const (
 
 	// ErrScanSqlRow error scan sql row.
 	ErrScanSqlRow = Error("failed scan sql row")
+
+	// ErrRedisNil error redis: nil.
+	ErrRedisNil = Error("redis: nil")
 )
 
 type Error string
