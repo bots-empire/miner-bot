@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/roylee0704/gron"
+	"github.com/roylee0704/gron/xtime"
 
 	"github.com/Stepan1328/miner-bot/log"
 	"github.com/Stepan1328/miner-bot/model"
@@ -92,6 +93,7 @@ func startPrometheusHandler(logger log.Logger) {
 func startHandlers(srvs []*services.Users, logger log.Logger) {
 	wg := new(sync.WaitGroup)
 	cron := gron.New()
+	cron.AddFunc(gron.Every(1*xtime.Day).At("20:59"), srvs[0].SendTodayUpdateMsg)
 
 	for _, service := range srvs {
 		wg.Add(1)

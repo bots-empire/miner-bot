@@ -84,7 +84,7 @@ func (u *Users) GetFromTop(topNumber int) (*model.Top, error) {
 	return top, nil
 }
 
-func (u *Users) GetTopFromUsers() ([]*model.Top, error) {
+func (u *Users) GetTop() ([]*model.Top, error) {
 	dataBase := u.bot.GetDataBase()
 
 	rows, err := dataBase.Query(`SELECT * FROM top;`)

@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/Stepan1328/miner-bot/model"
 	"github.com/bots-empire/base-bot/msgs"
 )
@@ -21,19 +19,18 @@ func (u *Users) TopListPlayers() {
 }
 
 func (u *Users) TopListPlayerCommand(s *model.Situation) error {
-	countOfUsers := u.admin.CountUsers() / 10
-	fmt.Println(countOfUsers)
-	users, err := u.GetUsers(countOfUsers)
+	count := u.admin.CountUsers()
+	users, err := u.GetUsers(count)
 	if err != nil {
 		return err
 	}
 
 	if len(users) < 3 {
-		u.Msgs.SendNotificationToDeveloper("users < 3", false)
+		u.Msgs.SendNotificationToDeveloper("failed to get users: ", false)
 		return nil
 	}
 
-	top, err := u.GetTopFromUsers()
+	top, err := u.GetTop()
 	if err != nil {
 		return err
 	}
@@ -56,24 +53,26 @@ func (u *Users) TopListPlayerCommand(s *model.Situation) error {
 
 	for i := range users {
 		if users[i].ID == s.User.ID {
-			return u.top3PlayersFromMain(
-				users[i].ID,
-				i,
-				users[i].Balance,
-				[]int{users[0].Balance, users[1].Balance, users[2].Balance})
+			if i <= 2 {
+				err = u.top3PlayersFromMain(
+					users[i].ID,
+					i,
+					users[i].Balance,
+					[]int{users[0].Balance, users[1].Balance, users[2].Balance})
+			} else {
+				err := u.topPlayers(users, i)
+				if err != nil {
+					return err
+				}
+			}
 		}
-
-		if i == 0 {
-			continue
-		}
-		return u.topPlayers(users, i)
 	}
 
 	return nil
 }
 
 func (u *Users) createTopForMailing(users []*model.User) error {
-	top, err := u.GetTopFromUsers()
+	top, err := u.GetTop()
 	if err != nil {
 		return err
 	}
@@ -88,22 +87,29 @@ func (u *Users) createTopForMailing(users []*model.User) error {
 	}
 
 	for i := 0; i <= 2; i++ {
-		err := u.updateTop3(users[i].ID, i, users[i].Balance)
+		err := u.updateTop3(users[i].ID, i+1, users[i].Balance)
 		if err != nil {
 			return err
 		}
+	}
 
+	for i := 0; i <= 2; i++ {
 		err = u.top3Players(
 			users[i].ID,
 			i,
 			users[i].Balance,
 			[]int{users[0].Balance, users[1].Balance, users[2].Balance})
-	}
-
-	for i := 3; i <= len(users); i++ {
-		err := u.topPlayers(users, i)
 		if err != nil {
 			return err
+		}
+	}
+
+	if len(users) > 3 {
+		for i := 3; i <= len(users); i++ {
+			err := u.topPlayers(users, i)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -187,7 +193,7 @@ func (u *Users) updateTop3(id int64, i int, balance int) error {
 
 func (u *Users) GetRewardCommand(s *model.Situation) error {
 	var userNum int
-	top, err := u.GetTopFromUsers()
+	top, err := u.GetTop()
 	if err != nil {
 		return err
 	}

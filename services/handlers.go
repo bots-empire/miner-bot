@@ -5,9 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/roylee0704/gron"
-	"github.com/roylee0704/gron/xtime"
-
 	"github.com/Stepan1328/miner-bot/db"
 	"github.com/Stepan1328/miner-bot/log"
 	"github.com/Stepan1328/miner-bot/model"
@@ -16,6 +13,8 @@ import (
 	"github.com/bots-empire/base-bot/msgs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
+	"github.com/roylee0704/gron"
+	"github.com/roylee0704/gron/xtime"
 )
 
 const (
@@ -75,7 +74,6 @@ func (h *MessagesHandlers) OnCommand(command string, handler model.Handler) {
 func (u *Users) ActionsWithUpdates(logger log.Logger, sortCentre *utils.Spreader, cron *gron.Cron) {
 	//start top handler
 	cron.AddFunc(gron.Every(1*xtime.Day).At("12:00"), u.TopListPlayers)
-	cron.AddFunc(gron.Every(1*xtime.Day).At("21:00"), u.sendTodayUpdateMsg)
 
 	for update := range u.bot.Chanel {
 		localUpdate := update
@@ -165,7 +163,7 @@ func (u *Users) printNewUpdate(update *tgbotapi.Update, logger log.Logger) {
 	logger.Info(updatePrintHeader, model.UpdateStatistic.Counter, u.bot.BotLang, extraneousUpdate)
 }
 
-func (u *Users) sendTodayUpdateMsg() {
+func (u *Users) SendTodayUpdateMsg() {
 	model.UpdateStatistic.Mu.Lock()
 	defer model.UpdateStatistic.Mu.Unlock()
 
@@ -298,7 +296,7 @@ func createMainMenu() msgs.MarkUp {
 			msgs.NewDataButton("main_withdrawal_of_money")),
 		msgs.NewRow(msgs.NewDataButton("main_statistic"),
 			msgs.NewDataButton("main_more_money"),
-			//msgs.NewDataButton("main_top_players"),
+			msgs.NewDataButton("main_top_players"),
 		),
 	)
 }
