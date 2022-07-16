@@ -95,7 +95,7 @@ func UploadDataBase(dbLang string) *sql.DB {
 	migrateReferralFriends(dataBase)
 
 	_, err = dataBase.Exec("ALTER TABLE users DROP COLUMN referral_count;")
-	if err != nil && err.Error() != "Error 1091: Can't DROP 'referral_count'; check that column/key exists" {
+	if err != nil && err.Error() != "Error 1091: Can't DROP COLUMN `referral_count`; check that it exists" {
 		log.Fatalln(err)
 	}
 

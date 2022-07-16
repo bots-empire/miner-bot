@@ -490,7 +490,8 @@ func (a *Admin) StatisticCommand(s *model.Situation) error {
 
 	count := a.CountUsers()
 	allCount := a.countAllUsers()
-	referrals := a.countReferrals(s.BotLang, count)
+	//referrals := a.countReferrals(s.BotLang, count)
+	referrals := "unavailable"
 	//lastDayUsers := countUserFromLastDay(s.BotLang)
 	blocked := a.countBlockedUsers(s.BotLang)
 	subscribers := a.countSubscribers(s.BotLang)

@@ -41,6 +41,7 @@
   "req_withdrawal_amount": "Specify the withdrawal amount \uD83D\uDC47",
   "incorrect_amount": "Incorrect input\n\nSpecify the withdrawal amount \uD83D\uDC47",
   "lack_of_funds": "Funds not enough !\n\nSpecify the withdrawal amount \uD83D\uDC47",
+  "insufficient_miner_level": "Error! Withdrawal is possible from miner level 3",
   "minimum_amount_not_reached": "Error! Minimum withdrawal amount is %d {{currency}}.\n\nSpecify the withdrawal amount \uD83D\uDC47",
   "successfully_withdrawn": "✅ The request was sent to the payment gateway...\n\nIl Payment can take up to 3 business days !",
   "referral_text": "\uD83D\uDCB3 Get a bonus for referrals \uD83D\uDC47\n\uD83D\uDD17 Forward a link - %s\n\n✅ %d {{currency}} - you get for every referral.\n\n\n\uD83D\uDC65 Your referrals: %d (number of people)",
