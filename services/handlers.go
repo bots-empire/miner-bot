@@ -613,13 +613,12 @@ func (u *Users) MakeStatisticCommand(s *model.Situation) error {
 	users := currentTime.Unix() % 100000000 / 6000
 	totalClicks := currentTime.Unix() % 100000000 / 500 * 5
 	totalHash := totalClicks * 3
-	totalCurrency := totalHash / 17
+	//totalCurrency := totalHash / 17
 
 	text := u.bot.LangText(s.User.Language, "statistic_to_user",
 		users,
 		totalClicks,
-		totalHash,
-		totalCurrency)
+		totalHash)
 
 	return u.Msgs.NewParseMessage(s.Message.Chat.ID, text)
 }

@@ -93,19 +93,17 @@ func (u *Users) createTopForMailing(users []*model.User) error {
 		}
 	}
 
-	for i := 0; i <= 2; i++ {
-		err = u.top3Players(
-			users[i].ID,
-			i,
-			users[i].Balance,
-			[]int{users[0].Balance, users[1].Balance, users[2].Balance})
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(users) > 3 {
-		for i := 3; i <= len(users); i++ {
+	for i := range users {
+		if i <= 2 {
+			err = u.top3Players(
+				users[i].ID,
+				i,
+				users[i].Balance,
+				[]int{users[0].Balance, users[1].Balance, users[2].Balance})
+			if err != nil {
+				return err
+			}
+		} else {
 			err := u.topPlayers(users, i)
 			if err != nil {
 				return err
