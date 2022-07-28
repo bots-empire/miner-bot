@@ -67,6 +67,7 @@ func UploadDataBase(dbLang string) *sql.DB {
 	dataBase.Exec("CREATE TABLE IF NOT EXISTS users (" + cfg.UserTable + ");")
 	dataBase.Exec("CREATE TABLE IF NOT EXISTS links (" + cfg.Links + ");")
 	dataBase.Exec("CREATE TABLE IF NOT EXISTS subs (" + cfg.Subs + ");")
+	dataBase.Exec("CREATE TABLE IF NOT EXISTS income_info (" + cfg.IncomeInfo + ");")
 	dataBase.Exec("CREATE TABLE IF NOT EXISTS top (" + cfg.Top + ");")
 	dataBase.Exec("CREATE INDEX balanceindex ON users (balance);")
 
@@ -82,22 +83,22 @@ func UploadDataBase(dbLang string) *sql.DB {
 		log.Fatalf("Failed open database: %s\n", err.Error())
 	}
 
-	_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN father_id bigint NOT NULL AFTER miner_level;")
-	if err != nil && err.Error() != "Error 1060: Duplicate column name 'father_id'" {
-		log.Fatalln(err)
-	}
-
-	_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN all_referrals text NOT NULL AFTER father_id;")
-	if err != nil && err.Error() != "Error 1060: Duplicate column name 'all_referrals'" {
-		log.Fatalln(err)
-	}
+	//_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN father_id bigint NOT NULL AFTER miner_level;")
+	//if err != nil && err.Error() != "Error 1060: Duplicate column name 'father_id'" {
+	//	log.Fatalln(err)
+	//}
+	//
+	//_, err = dataBase.Exec("ALTER TABLE users ADD COLUMN all_referrals text NOT NULL AFTER father_id;")
+	//if err != nil && err.Error() != "Error 1060: Duplicate column name 'all_referrals'" {
+	//	log.Fatalln(err)
+	//}
 
 	migrateReferralFriends(dataBase)
 
-	_, err = dataBase.Exec("ALTER TABLE users DROP COLUMN referral_count;")
-	if err != nil && err.Error() != "Error 1091: Can't DROP COLUMN `referral_count`; check that it exists" {
-		log.Fatalln(err)
-	}
+	//_, err = dataBase.Exec("ALTER TABLE users DROP COLUMN referral_count;")
+	//if err != nil && err.Error() != "Error 1091: Can't DROP COLUMN `referral_count`; check that it exists" {
+	//	log.Fatalln(err)
+	//}
 
 	err = dataBase.Ping()
 	if err != nil {

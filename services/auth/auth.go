@@ -125,6 +125,13 @@ func (a *Auth) pullReferralID(message *tgbotapi.Message) int64 {
 		return 0
 	}
 
+	if err = a.saveIncomeUser(&model.IncomeInfo{
+		UserID: message.From.ID,
+		Source: linkInfo.Source,
+	}); err != nil {
+		a.msgs.SendNotificationToDeveloper("some error in save income info: "+err.Error(), false)
+	}
+
 	model.IncomeBySource.WithLabelValues(
 		a.bot.BotLink,
 		a.bot.BotLang,
@@ -143,6 +150,20 @@ func createSimpleUser(lang string, message *tgbotapi.Message) *model.User {
 		RegisterTime:  time.Now().Unix(),
 		Status:        "active",
 	}
+}
+
+func (a *Auth) saveIncomeUser(info *model.IncomeInfo) error {
+	_, err := a.bot.GetDataBase().Exec(`
+INSERT INTO 
+	income_info(user_id, source)
+VALUES(?, ?);`,
+		info.UserID,
+		info.Source)
+	if err != nil {
+		return errors.Wrap(err, "failed insert income info")
+	}
+
+	return nil
 }
 
 func (a *Auth) GetUser(id int64) (*model.User, error) {

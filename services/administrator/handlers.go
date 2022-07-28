@@ -37,6 +37,67 @@ func (h *AdminMessagesHandlers) OnCommand(command string, handler model.Handler)
 	h.Handlers[command] = handler
 }
 
+func (a *Admin) CheckAdminMessage(s *model.Situation) error {
+	if !ContainsInAdmin(s.User.ID) {
+		return a.notAdmin(s.User)
+	}
+
+	s.Command, s.Err = a.bot.GetCommandFromText(s.Message, s.User.Language, s.User.ID)
+	if s.Err == nil {
+		Handler := model.Bots[s.BotLang].AdminMessageHandler.
+			GetHandler(s.Command)
+
+		if Handler != nil {
+			return Handler(s)
+		}
+	}
+
+	s.Command = strings.TrimLeft(strings.Split(s.Params.Level, "?")[0], "admin")
+
+	Handler := model.Bots[s.BotLang].AdminMessageHandler.
+		GetHandler(s.Command)
+
+	if Handler != nil {
+		return Handler(s)
+	}
+
+	if a.checkIncomeInfo(s) {
+		return nil
+	}
+
+	return model.ErrCommandNotConverted
+}
+
+func (a *Admin) checkIncomeInfo(s *model.Situation) bool {
+	if s.Message == nil {
+		return false
+	}
+
+	if s.Message.ForwardFrom == nil {
+		return false
+	}
+
+	lang := model.AdminLang(s.User.ID)
+
+	info, err := a.getIncomeInfo(s.Message.ForwardFrom.ID)
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper("some error in get income info: "+err.Error(), false)
+		return true
+	}
+
+	if info == nil {
+		err = a.msgs.NewParseMessage(s.User.ID, a.bot.AdminText(lang, "user_info_not_found"))
+	}
+
+	err = a.msgs.NewParseMessage(s.User.ID, a.adminFormatText(lang, "user_income_info", info.UserID, info.Source))
+	if err != nil {
+		a.msgs.SendNotificationToDeveloper("error in send msg: "+err.Error(), false)
+		return true
+	}
+
+	return true
+}
+
 func (a *Admin) RemoveAdminCommand(s *model.Situation) error {
 	lang := model.AdminLang(s.User.ID)
 	adminId, err := strconv.ParseInt(s.Message.Text, 10, 64)
@@ -227,31 +288,4 @@ func getUrlAndChatID(message *tgbotapi.Message) (string, int64) {
 	//advert.ChannelID = int64(chatId)
 
 	return data[1], int64(chatId)
-}
-
-func (a *Admin) CheckAdminMessage(s *model.Situation) error {
-	if !ContainsInAdmin(s.User.ID) {
-		return a.notAdmin(s.User)
-	}
-
-	s.Command, s.Err = a.bot.GetCommandFromText(s.Message, s.User.Language, s.User.ID)
-	if s.Err == nil {
-		Handler := model.Bots[s.BotLang].AdminMessageHandler.
-			GetHandler(s.Command)
-
-		if Handler != nil {
-			return Handler(s)
-		}
-	}
-
-	s.Command = strings.TrimLeft(strings.Split(s.Params.Level, "?")[0], "admin")
-
-	Handler := model.Bots[s.BotLang].AdminMessageHandler.
-		GetHandler(s.Command)
-
-	if Handler != nil {
-		return Handler(s)
-	}
-
-	return model.ErrCommandNotConverted
 }
