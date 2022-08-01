@@ -87,6 +87,7 @@ func (a *Admin) checkIncomeInfo(s *model.Situation) bool {
 
 	if info == nil {
 		err = a.msgs.NewParseMessage(s.User.ID, a.bot.AdminText(lang, "user_info_not_found"))
+		return true
 	}
 
 	err = a.msgs.NewParseMessage(s.User.ID, a.adminFormatText(lang, "user_income_info", info.UserID, info.Source))
